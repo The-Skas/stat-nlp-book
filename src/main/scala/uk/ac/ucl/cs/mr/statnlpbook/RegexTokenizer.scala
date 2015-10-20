@@ -52,8 +52,13 @@ object Tokenizer {
     val text = "Mr. Bob Dobolina is thinkin' of a master plan. Why doesn't he quit?"
     val doc = Document.fromString(text)
     val tokenizer = Tokenizer.fromRegEx(" ")
+    val my_tokenizer = Tokenizer.default
     val tokenized = tokenizer(doc)
+    val my_tokenized = my_tokenizer(doc)
+
     println(tokenized.tokens mkString "\n")
+    println("****************")
+    println(my_tokenized.tokens mkString "\n")
 //    val punct = "[\\.\\?]"
 //    val beforePunct = s"(?=$punct)"
 //    val afterPunct = s"(?<=$punct)(?!\\s)" //but not if whitespace follows
