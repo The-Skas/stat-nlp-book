@@ -53,20 +53,21 @@ object TokenizationQuestion {
     val contraction_cant = ("""(?i)(?<=\w{2,6})(?=n't)""")
 
     //who's, it's, i'm {this is due to the grouping being (pre, '*)   ve|d|s|m|re|ll
-    val pro_nouns = "(?i)(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt|I|J)"
+    val pro_nouns = "(?i)(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt|\\b\\w)"
 
     //There is a case where "[man's / T's]" is not split into (man,'s) making it an outlier
     val contraction_s =  (s"(?i)(?<=$pro_nouns|\\w(\\w{0,4}|-.{0,4})\\w)(?<!\\b(man|plan|penetration|Tradition|vision|Devon|John|harlequin|brown))(?='s)")
 
-    val contraction_rest_ignore = ("(?!(s|t|ta|y)\\W)")
+    val contraction_rest_ignore = ("(?!(s|t|ta|y|tcha)\\W)")
+    val special_rest_ignore = "(?<!tryin)(?!'a)"
     val contraction_rest =  (s"(?i)(?<={1,5})(?='(?=\\w{1,5})(?!s\\W)(?!t\\W)($contraction_rest_ignore))")
 
     //cases: God' , lo'                         //'[NOT A WORD]
-    val contraction_lo_ignore = "in|en|\\b(gon|n)"
+    val contraction_lo_ignore = "in|en|\\b(gon|n|an)"
     val contraction_lo  = s"((?i)(?<!($contraction_lo_ignore))(?<=\\w{1,9})(?='\\W))"
     val split_contractions = (s"""$split_all_bracks|$split_unparsed_contractions|$contraction_cant|$contraction_s|$contraction_rest|$contraction_lo""")
     //                      if comma/ not work
-    val punctuation = """[\*\?\!\;\:\+\,\"]"""
+    val punctuation = """[\*\?\!\;\:\+\,\"\_]"""
                 //Titles and one Letter words.
     val titles = "(Mr|Mrs|Dr)"          //<----- arrow!
     val is_no_title = s"(?=\\.)(?<!$titles)"
