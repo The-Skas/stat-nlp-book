@@ -53,17 +53,18 @@ object TokenizationQuestion {
     val contraction_cant = ("""(?i)(?<=\w{2,6})(?=n't)""")
 
     //who's, it's, i'm {this is due to the grouping being (pre, '*)   ve|d|s|m|re|ll
-    val pro_nouns = "(?i)(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt|\\b\\w)"
+    val pro_nouns = "(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt|\\b\\w)"
 
     //There is a case where "[man's / T's]" is not split into (man,'s) making it an outlier
-    val contraction_s =  (s"(?i)(?<=$pro_nouns|\\w(\\w{0,4}|-.{0,4})\\w)(?<!\\b(man|plan|penetration|Tradition|vision|Devon|John|harlequin|brown))(?='s)")
 
-    val contraction_rest_ignore = ("(?!(s|t|ta|y|tcha)\\W)")
-    val special_rest_ignore = "(?<!tryin)(?!'a)"
-    val contraction_rest =  (s"(?i)(?<={1,5})(?='(?=\\w{1,5})(?!s\\W)(?!t\\W)($contraction_rest_ignore))")
+    val contraction_s =  (s"(?<=$pro_nouns|\\w(\\w{0,4}|-.{0,4})\\w)(?<!\\b(man|plan|penetration|Tradition|vision|Devon|John|harlequin|brown|Johnson|Benjamin|Logan|Japan|cousin|children|nation|on|popcorn|uestion|revolution|Countdown|prison|heaven))(?='s)")
+
+    val contraction_rest_ignore = ("(?!(s|t|ta|y|tcha|a|ll)\\W)")
+    val special_rest_ignore = "(?<=(\\w{1,5})(?<!tryin))(?=\\'a)|(?<=\\w{1,5}(?<!(a\\-drenalin)|(man)))(?=\\'ll)"
+    val contraction_rest =  (s"(?i)$special_rest_ignore|(?i)(?<={1,5})(?='(?=\\w{1,5})(?!s\\W)(?!t\\W)($contraction_rest_ignore))")
 
     //cases: God' , lo'                         //'[NOT A WORD]
-    val contraction_lo_ignore = "in|en|\\b(gon|n|an)"
+    val contraction_lo_ignore = "in|en|\\b(gon|gonn|n|an|Marylan|marijuan|mourn)"
     val contraction_lo  = s"((?i)(?<!($contraction_lo_ignore))(?<=\\w{1,9})(?='\\W))"
     val split_contractions = (s"""$split_all_bracks|$split_unparsed_contractions|$contraction_cant|$contraction_s|$contraction_rest|$contraction_lo""")
     //                      if comma/ not work
