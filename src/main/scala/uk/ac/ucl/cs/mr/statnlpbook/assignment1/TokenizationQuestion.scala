@@ -53,12 +53,12 @@ object TokenizationQuestion {
     val contraction_cant = ("""(?i)(?<=\w{2,6})(?=n't)""")
 
     //who's, it's, i'm {this is due to the grouping being (pre, '*)   ve|d|s|m|re|ll
-    val pro_nouns = "(?i)(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt)"
+    val pro_nouns = "(?i)(it|he|she|how|let|some(body|one|thing)|that|there|what|where|when|who|why|\\d|mother|pj|\\bt|I|J)"
 
     //There is a case where "[man's / T's]" is not split into (man,'s) making it an outlier
-    val contraction_s =  (s"(?i)(?<=$pro_nouns|\\w(\\w{0,10}|-.{0,10})\\w)(?<!\\b(man|plan|penetration))(?='s)")
+    val contraction_s =  (s"(?i)(?<=$pro_nouns|\\w(\\w{0,4}|-.{0,4})\\w)(?<!\\b(man|plan|penetration|Tradition|vision|Devon|John|harlequin|brown))(?='s)")
 
-    val contraction_rest_ignore = ("(?!(s|t|ta)\\W)")
+    val contraction_rest_ignore = ("(?!(s|t|ta|y)\\W)")
     val contraction_rest =  (s"(?i)(?<={1,5})(?='(?=\\w{1,5})(?!s\\W)(?!t\\W)($contraction_rest_ignore))")
 
     //cases: God' , lo'                         //'[NOT A WORD]
@@ -66,13 +66,14 @@ object TokenizationQuestion {
     val contraction_lo  = s"((?i)(?<!($contraction_lo_ignore))(?<=\\w{1,9})(?='\\W))"
     val split_contractions = (s"""$split_all_bracks|$split_unparsed_contractions|$contraction_cant|$contraction_s|$contraction_rest|$contraction_lo""")
     //                      if comma/ not work
-    val punctuation = """[\.\*\?\!\;\:\+]"""
+    val punctuation = """[\*\?\!\;\:\+\,\"]"""
                 //Titles and one Letter words.
     val titles = "(Mr|Mrs|Dr)"          //<----- arrow!
+    val is_no_title = s"(?=\\.)(?<!$titles)"
     val split_period_in_single_letter = "(?<=\\b\\w(?=\\.))|(?<=\\.)(?=\\w.?\\W)"
-    val clean_punctuation = s"(?=\\')(?<=\\W)|(?<=$punctuation)(?<!$titles)(?=\\.)|(?<=\\.)(?=$punctuation)|$split_period_in_single_letter"
+    val clean_punctuation = s"(?=\\')(?<=\\W)|(?<=$punctuation)(?<!$titles)(?=\\.)|(?<=\\.)(?=($punctuation))|$split_period_in_single_letter"
     // punc ".,\?"
-    val split_punctuation = """(?=[\*\,\"\?\!])|(?<=\")"""
+    val split_punctuation = s"""(?=$punctuation)|$is_no_title|(?<=$punctuation|\\.)|(?<=\")"""
     //val split_chorus = """(?=\[Chorus\])|(?=Chorus\])|(?=\])(?<=Chorus)|(?<=Chorus])"""
     //TODO: Create a 'seperate_regx(str_patten)' method, which returns (?=pattern|?<=pattern)
 
@@ -91,12 +92,15 @@ object TokenizationQuestion {
 
     def find_mismatch(list_tuple: IndexedSeq[(String,String)]): Any ={
       var count = 0;
+      var some_list = List(("","",0));
       for ((r, g) <-list_tuple) {
         count += 1;
         if( r != g) {
-          return (r,g,count);
+           return (r, g, count)
+           some_list = (r,g,count) :: some_list
         }
       }
+      return some_list
 
     }
 
