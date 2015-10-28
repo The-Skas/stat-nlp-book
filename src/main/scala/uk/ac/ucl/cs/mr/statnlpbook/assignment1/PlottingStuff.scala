@@ -10,20 +10,21 @@ object PlottingStuff {
     val hashmap_count_bar = new collection.mutable.HashMap[Int, Int]
     var curr_count = 0
     var can_count:Boolean = false
-    for(i <- 0 until train.size) {
-      if (train(i) == "[BAR]") {
-        if (curr_count != 0) {
-          hashmap_count_bar(curr_count) = hashmap_count_bar.getOrElse(curr_count, 0) + 1
-        }
-        can_count = true
-        curr_count = 0
-      } else if (train(i) == "[/BAR]") {
-        can_count = false
-      }
-      else if (can_count) {
-        curr_count += 1
-      }
-    }
+
+//    for(i <- 0 until train.size) {
+//      if (train(i) == "[BAR]") {
+//        if (curr_count != 0) {
+//          hashmap_count_bar(curr_count) = hashmap_count_bar.getOrElse(curr_count, 0) + 1
+//        }
+//        can_count = true
+//        curr_count = 0
+//      } else if (train(i) == "[/BAR]") {
+//        can_count = false
+//      }
+//      else if (can_count) {
+//        curr_count += 1
+//      }
+//    }
     val x = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._1)
     val y = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._2.toDouble)
 

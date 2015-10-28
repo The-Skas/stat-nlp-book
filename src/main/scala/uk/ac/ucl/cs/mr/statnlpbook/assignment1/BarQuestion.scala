@@ -21,7 +21,8 @@ object BarQuestion {
     def order = 20
     def some = Segmenter
     //TODO: This needs to be improved by you.
-    def probability(word: String, history: String*) = ???
+    def probability(word: String, history: String*) =
+      if (vocab(word)) 1.0 / vocab.size else 0.0
   }
 
   def main(args: Array[String]) {
@@ -35,7 +36,6 @@ object BarQuestion {
 
     //the training sequence of words
     val train = Assignment1Util.loadWords(trainFile).toBuffer
-
 
 
 
