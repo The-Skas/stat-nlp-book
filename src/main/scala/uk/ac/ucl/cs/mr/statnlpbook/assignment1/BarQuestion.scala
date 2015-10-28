@@ -1,7 +1,9 @@
 package uk.ac.ucl.cs.mr.statnlp2015.assignment1
-
+import org.jfree.data.statistics.HistogramDataset
 import java.io.File
-
+import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
+import org.sameersingh.scalaplot._
+import uk.ac.ucl.cs.mr.statnlpbook.Segmenter
 import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.{LanguageModel, UniformLM, Util}
 
 /**
@@ -17,20 +19,25 @@ object BarQuestion {
    */
   case class MyBarAwareLM(vocab: Set[String]) extends LanguageModel {
     def order = 20
-
+    def some = Segmenter
     //TODO: This needs to be improved by you.
     def probability(word: String, history: String*) = ???
   }
 
   def main(args: Array[String]) {
+
+
     //The training file we provide you
-    val trainFile = new File(args(0))
+    val trainFile = new File("data/p2/p2_train.txt")
 
     //the dev file we provide you.
-    val devFile = new File(args(1))
+    val devFile = new File("data/p2/p2_dev.txt")
 
     //the training sequence of words
     val train = Assignment1Util.loadWords(trainFile).toBuffer
+
+
+
 
     //the dev sequence of words
     val dev = Assignment1Util.loadWords(devFile).toBuffer
