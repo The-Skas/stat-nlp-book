@@ -6,6 +6,8 @@ import org.sameersingh.scalaplot._
 import uk.ac.ucl.cs.mr.statnlpbook.Segmenter
 import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.{LanguageModel, UniformLM, Util}
 
+import scala.collection.immutable.HashMap
+
 /**
  * @author riedel
  */
@@ -18,6 +20,79 @@ object BarQuestion {
    * @param vocab the vocabulary.
    */
   case class MyBarAwareLM(vocab: Set[String]) extends LanguageModel {
+    def order = 20
+    var alpha = 1
+    def some = Segmenter
+
+    val states: Map[String, Int] = Map("UNIFORM" -> 0
+      , "LINEAR" -> 1);
+
+    var curr_state:Int = states("UNIFORM")
+
+    def uniform_probability(word: String, history: Seq[String]): Double =  {
+      if (vocab(word)) {
+        if(word.contentEquals("[BAR]")) {
+          count_distance = 0
+          curr_state = states("LINEAR")
+        }
+        return 1.0 / vocab.size
+      }
+      else {
+        0.0
+      }
+    }
+
+    //Does not implement Linear
+    var count_distance = 0
+    def linear_probability(word: String, history: Seq[String]): Double = {
+      var prob_any = 1.0 / vocab.size
+
+      //Min is to prevent returning a number over 1
+      //if alphas value gets too large
+      val MAXIMUM_PROBABILITY = 1.0
+      var prob_end_bar = Math.min(MAXIMUM_PROBABILITY,
+                                  prob_any * (count_distance + 1) *alpha)
+
+      if (vocab(word)) {
+        //Change state
+        if (word.contentEquals("[/BAR]")) {
+          curr_state = states("UNIFORM")
+
+          //Here return Uniform Probability
+          return prob_end_bar
+        }
+        else {
+          //Assert
+
+          count_distance += 1
+          //Max is to prevent returning a negative number
+          // if alphas value gets too high
+          val MINIMUM_PROBABILITY = 0.0
+          return Math.max( MINIMUM_PROBABILITY , 1.0 - prob_end_bar)
+        }
+
+      }else {
+        return 0.0
+      }
+    }
+
+    //?? Finite state machines?
+
+    def probability(word: String, history: String*): Double = {
+      if (curr_state == states("UNIFORM")) {
+        return uniform_probability(word, history)
+      }
+      else if (curr_state == states("LINEAR")) {
+        return linear_probability(word, history)
+      }
+      else {
+        return 0.0
+      }
+    }
+
+  }
+
+  case class UniformProbLM(vocab: Set[String]) extends LanguageModel {
     def order = 20
     def some = Segmenter
     //TODO: This needs to be improved by you.
@@ -49,10 +124,14 @@ object BarQuestion {
     //TODO: Improve the MyBarAwareLM implementation
     val lm = MyBarAwareLM(vocab)
 
+    val alpha_values = List.range(1, 300, 10)
     //This calculates the perplexity of the
-    val pp = LanguageModel.perplexity(lm, dev)
+    for( i <- 0 until alpha_values.size) {
+      lm.alpha = alpha_values(i)
+      var pp = LanguageModel.perplexity(lm, dev)
+      println("alpha: "+alpha_values(i)+" -- Perplexity: "+pp)
+    }
 
-    println(pp)
 
     //TODO:
 

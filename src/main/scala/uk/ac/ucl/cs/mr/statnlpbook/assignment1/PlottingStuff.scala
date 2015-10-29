@@ -25,16 +25,16 @@ object PlottingStuff {
 //        curr_count += 1
 //      }
 //    }
-    val x = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._1)
-    val y = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._2.toDouble)
-
-
-
-    val series_b = new MemBarSeries(y, "SOME ?")
-    val data_b = new BarData(x.map("" + _), Seq(series_b))
-    val chart_b = new BarChart("Powers!", data_b)
-
-    val plotter = new GnuplotPlotter(chart_b)
-    plotter.svg("../", "SomeGraph")
+//    val x = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._1)
+//    val y = hashmap_count_bar.toList.sortBy( i => i._1).map(i => i._2.toDouble)
+//
+//
+//
+//    val series_b = new MemBarSeries(y, "SOME ?")
+//    val data_b = new BarData(x.map("" + _), Seq(series_b))
+//    val chart_b = new BarChart("Powers!", data_b)
+//
+//    val plotter = new GnuplotPlotter(chart_b)
+//    plotter.svg("../", "SomeGraph")
   }
 }
