@@ -21,7 +21,7 @@ object BarQuestion {
    */
   case class MyBarAwareLM(vocab: Set[String]) extends LanguageModel {
     def order = 20
-    var alpha = 1
+    var alpha:Double = 125.0
     def some = Segmenter
 
     val states: Map[String, Int] = Map("UNIFORM" -> 0
@@ -68,7 +68,10 @@ object BarQuestion {
           //Max is to prevent returning a negative number
           // if alphas value gets too high
           val MINIMUM_PROBABILITY = 0.0
-          return Math.max( MINIMUM_PROBABILITY , 1.0 - prob_end_bar)
+
+          //TODO: Probability here is incorrect. Change it
+          //     We are calculating the probability of a Specific word
+          return Math.max( MINIMUM_PROBABILITY , (1.0 - prob_end_bar) * prob_any)
         }
 
       }else {
@@ -92,40 +95,61 @@ object BarQuestion {
 
   }
 
-  case class BarIndexAwareLM(vocab: Set[String]) extends LanguageModel
+  case class BarIndexAwareLM(train:IndexedSeq[String], _vocab: Set[String]) extends LanguageModel
   {
-      def order = 20
-      var alpha = 1
-      def some = Segmenter
-      val total_cout = 
-      val states: Map[String, Int] = Map("UNIFORM" -> 0
-        , "LINEAR" -> 1);
+    //The vocabulary words.
+    def vocab = _vocab
+    def order = 1
 
-      var curr_state:Int = states("UNIFORM")
+    //Weight that can be modified.
+    var alpha:Double = 1.0
+    def some = Segmenter
+    val states: Map[String, Int] = Map("UNIFORM" -> 0
+      , "LINEAR" -> 1);
 
-      def uniform_probability(word: String, history: Seq[String]): Double =  {
-        if (vocab(word)) {
-          if(word.contentEquals("[BAR]")) {
-            count_distance = 0
-            curr_state = states("LINEAR")
-          }
-          return 1.0 / vocab.size
+    var curr_state:Int = states("UNIFORM")
+
+    def uniform_probability(word: String, history: Seq[String]): Double =  {
+      if (vocab(word)) {
+        if(word.contentEquals("[BAR]")) {
+          count_distance = 0
+          curr_state = states("LINEAR")
         }
-        else {
-          0.0
-        }
+        return 1.0 / vocab.size
       }
+      else {
+        0.0
+      }
+    }
 
-      //Does not implement Linear
-      var count_distance = 0
-      def linear_probability(word: String, history: Seq[String]): Double = {
+    //Does not implement Linear
+    var count_distance = 0
+    var total_count_distance = 0
+      //?? Finite state machines?
+      //Used only here
+    val hashmap_count_bar_end = new collection.mutable.HashMap[Int, Int]
+
+    // All variables first, methods second
+
+    //Init Functions
+    train(train)
+    val total_end_bars:Double = this.hashmap_count_bar_end.foldLeft(0)((sum,t) => sum+t._2)
+
+    def index_linear_probability(word: String, history: Seq[String]): Double = {
         var prob_any = 1.0 / vocab.size
 
         //Min is to prevent returning a number over 1
         //if alphas value gets too large
         val MAXIMUM_PROBABILITY = 1.0
+
+
+        var number_of_bars_at_index: Double = hashmap_count_bar_end.getOrElse(count_distance, 0).toDouble
+
+        var prob_end_over_count: Double = number_of_bars_at_index / total_end_bars
+
+
         var prob_end_bar = Math.min(MAXIMUM_PROBABILITY,
-          prob_any * (count_distance + 1) *alpha)
+           (prob_end_over_count) *alpha)
 
         if (vocab(word)) {
           //Change state
@@ -136,33 +160,57 @@ object BarQuestion {
             return prob_end_bar
           }
           else {
-            //Assert
-
+            //this distance is not to change the prob of current word
             count_distance += 1
+
             //Max is to prevent returning a negative number
             // if alphas value gets too high
             val MINIMUM_PROBABILITY = 0.0
-            return Math.max( MINIMUM_PROBABILITY , 1.0 - prob_end_bar)
+            return Math.max( MINIMUM_PROBABILITY , (1.0 - prob_end_bar)* prob_any )
           }
 
         }else {
           return 0.0
         }
       }
+    def train(train: IndexedSeq[String]): Unit =
+    {
+      //In this case we don't want order
+      var can_count = false
+      for (word <- train)
+      {
+        if(word == "[BAR]")
+        {
+          count_distance = 0
+          can_count = true
+        }
+        else if(word == "[/BAR]") {
+          // Count
+          var map = hashmap_count_bar_end
+          map(count_distance) = map.getOrElse(count_distance, 0) + 1
+          total_count_distance += 1
+          //Just incase we don't encounter a [\Bar]
+          can_count = false
+        }
+        else if(can_count) {
+          count_distance += 1
+        }
+      }
+    }
 
-      //?? Finite state machines?
-
-      def probability(word: String, history: String*): Double = {
+    def probability(word: String, history: String*): Double = {
         if (curr_state == states("UNIFORM")) {
           return uniform_probability(word, history)
         }
         else if (curr_state == states("LINEAR")) {
-          return linear_probability(word, history)
+          return index_linear_probability(word, history)
         }
         else {
           return 0.0
         }
-      }
+    }
+
+    //Call constructors:
 
   }
 
@@ -196,9 +244,19 @@ object BarQuestion {
     val vocab = train.toSet + Util.OOV
 
     //TODO: Improve the MyBarAwareLM implementation
-    val lm = MyBarAwareLM(vocab)
+//    val lm = MyBarAwareLM(vocab)
+//    val lm = UniformProbLM(vocab)
+    val lm = BarIndexAwareLM(train.toIndexedSeq, vocab)
 
-    val alpha_values = List.range(1, 300, 1)
+    var i_dec = 1.0
+    var _list:List[Double] =  Nil
+    for(i <- 0 until 20) {
+      _list = i_dec :: _list
+      i_dec += 0.1
+    }
+
+
+    val alpha_values =  List.range(1, 9, 1)
     //This calculates the perplexity of the
 
     var x_perplexity = scala.collection.mutable.MutableList[Double]()
@@ -212,7 +270,7 @@ object BarQuestion {
       y_alpha_value += alpha_values(i)
       println("alpha: "+alpha_values(i)+" -- Perplexity: "+pp)
     }
-    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Model 2.3")
+    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
     //TODO:
 
     //TODO: combine a unigram model with the BAR aware LM through interpolation.

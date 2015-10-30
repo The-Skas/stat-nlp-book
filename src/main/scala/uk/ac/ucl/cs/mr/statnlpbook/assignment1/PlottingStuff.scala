@@ -54,7 +54,6 @@ object PlottingStuff {
     chart.showLegend = true
 
     val plotter = new JFGraphPlotter(chart)
-    plotter.jfreeChart().
     plotter.gui()
   }
 }
