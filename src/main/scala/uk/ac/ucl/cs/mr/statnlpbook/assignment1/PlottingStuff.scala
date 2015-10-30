@@ -1,7 +1,11 @@
-import com.quantifind.charts.Highcharts._
-import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
-import org.sameersingh.scalaplot.{BarChart, BarData, MemBarSeries}
+package uk.ac.ucl.cs.mr.statnlp2015.assignment1
 
+
+import com.quantifind.charts.Highcharts._
+import org.sameersingh.scalaplot.{MemXYSeries, XYData, NumericAxis}
+import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
+import org.sameersingh.scalaplot.jfreegraph.JFGraphPlotter
+import org.sameersingh.scalaplot.XYChart
 /**
  * Created by skas on 10/20/15.
  */
@@ -36,5 +40,21 @@ object PlottingStuff {
 //
 //    val plotter = new GnuplotPlotter(chart_b)
 //    plotter.svg("../", "SomeGraph")
+// val x = (1 until 100).map(_.toDouble)
+//
+
+
+//    val data = new XYData(series)
+  }
+
+  def plot_line_stuff(x:Seq[Double],y:Seq[Double], title:String ) {
+    val series = new MemXYSeries(x, y, title)
+    val _data = new XYData(series)
+    val chart = new XYChart(title,_data)
+    chart.showLegend = true
+
+    val plotter = new JFGraphPlotter(chart)
+    plotter.jfreeChart().
+    plotter.gui()
   }
 }
