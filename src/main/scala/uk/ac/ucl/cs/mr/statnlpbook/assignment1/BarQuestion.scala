@@ -34,6 +34,9 @@ object BarQuestion {
         if(word.contentEquals("[BAR]")) {
           count_distance = 0
           curr_state = states("LINEAR")
+        }else if(history.contains("[BAR]") && !history.contains("[/BAR]")){
+          count_distance = 0
+          curr_state = states("LINEAR")
         }
         return 1.0 / vocab.size
       }
@@ -50,6 +53,24 @@ object BarQuestion {
       //Min is to prevent returning a number over 1
       //if alphas value gets too large
       val MAXIMUM_PROBABILITY = 1.0
+
+      //****
+      //Hacky way to make sure
+      //'sample' method works as expected
+      val bar_index = history.lastIndexOf("[BAR]")
+      val end_bar_index = history.lastIndexOf("[/BAR]")
+      val bar_index_greater_than_end_bar_index = bar_index > end_bar_index
+
+      if(bar_index != -1 && bar_index_greater_than_end_bar_index) {
+        count_distance = (history.size - 1) - bar_index
+      } else {
+        count_distance = 0
+        curr_state = states("UNIFORM")
+        return prob_any
+      }
+      //'sample' hacky
+      //****
+
       var prob_end_bar = Math.min(MAXIMUM_PROBABILITY,
                                   prob_any * (count_distance + 1) *alpha)
 
@@ -99,7 +120,7 @@ object BarQuestion {
   {
     //The vocabulary words.
     def vocab = _vocab
-    def order = 1
+    def order = 25
 
     //Weight that can be modified.
     var alpha:Double = 1.0
@@ -114,7 +135,13 @@ object BarQuestion {
         if(word.contentEquals("[BAR]")) {
           count_distance = 0
           curr_state = states("LINEAR")
+          //Double Check
+        }else if(history.contains("[BAR]") && !history.contains("[/BAR]")){
+          count_distance = 0
+          curr_state = states("LINEAR")
         }
+
+        
         return 1.0 / vocab.size
       }
       else {
@@ -142,6 +169,24 @@ object BarQuestion {
         //if alphas value gets too large
         val MAXIMUM_PROBABILITY = 1.0
 
+        //****
+        //Hacky way to make sure
+        //'sample' method works as expected
+
+        val bar_index = history.lastIndexOf("[BAR]")
+        val end_bar_index = history.lastIndexOf("[/BAR]")
+
+        val bar_index_greater_than_end_bar_index = bar_index > end_bar_index
+
+        if(bar_index != -1 && bar_index_greater_than_end_bar_index) {
+          count_distance = (history.size - 1) - bar_index
+        } else {
+          count_distance = 0
+          curr_state = states("UNIFORM")
+          return prob_any
+        }
+        //'sample' hacky
+        //****
 
         var number_of_bars_at_index: Double = hashmap_count_bar_end.getOrElse(count_distance, 0).toDouble
 
@@ -244,8 +289,8 @@ object BarQuestion {
     val vocab = train.toSet + Util.OOV
 
     //TODO: Improve the MyBarAwareLM implementation
-//    val lm = MyBarAwareLM(vocab)
-//    val lm = UniformProbLM(vocab)
+    val lm_my = MyBarAwareLM(vocab)
+    val lm_uniform = UniformProbLM(vocab)
     val lm = BarIndexAwareLM(train.toIndexedSeq, vocab)
 
     var i_dec = 1.0
@@ -270,6 +315,10 @@ object BarQuestion {
       y_alpha_value += alpha_values(i)
       println("alpha: "+alpha_values(i)+" -- Perplexity: "+pp)
     }
+
+    lm.alpha = 1.0
+    LanguageModel.sample(lm_my, List("[BAR]"), 100)
+
     PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
     //TODO:
 
