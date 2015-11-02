@@ -125,12 +125,14 @@ object BarQuestion {
 
     //Weight that can be modified.
     var alpha:Double = 1.0
+    var beta:Double = 0.0
+
     def some = Segmenter
     val states: Map[String, Int] = Map("UNIFORM" -> 0
       , "LINEAR" -> 1, "END-LINEAR" -> 2);
 
     var curr_state:Int = states("END-LINEAR")
-    
+
     def uniform_probability(word: String, history: Seq[String]): Double =  {
       if (vocab(word)) {
         if(word.contentEquals("[BAR]")) {
@@ -167,11 +169,16 @@ object BarQuestion {
       //Used only here
     val hashmap_count_bar_end = new collection.mutable.HashMap[Int, Int]
 
+    //Used to count all words
+    val hashmap_count_words = new collection.mutable.HashMap[String, Int]
+
     // All variables first, methods second
 
     //Init Functions
     train(train)
     val total_end_bars:Double = this.hashmap_count_bar_end.foldLeft(0)((sum,t) => sum+t._2)
+
+    val total_words:Double =    this.hashmap_count_words.foldLeft(0)((s,t) => s + t._2)
 
     def endbar_index_linear_probability(word: String, history: Seq[String]): Double = {
       var prob_any = 1.0 / vocab.size
@@ -287,6 +294,14 @@ object BarQuestion {
         }
       }
 
+    def unigram_probability(word: String, history: Seq[String]): Double = {
+      if (vocab(word)) {
+        return (hashmap_count_words.getOrElse(word,0).toDouble / total_words.toDouble)
+      } else{
+        return 0.0
+      }
+    }
+
     def train(train: IndexedSeq[String]): Unit =
     {
       //In this case we don't want order
@@ -309,6 +324,9 @@ object BarQuestion {
         else if(can_count) {
           count_distance += 1
         }
+
+        hashmap_count_words(word) = hashmap_count_words.getOrElse(word, 0) + 1
+
       }
     }
 
@@ -317,10 +335,12 @@ object BarQuestion {
           return uniform_probability(word, history)
         }
         else if (curr_state == states("LINEAR")) {
-          return bar_index_linear_probability(word, history)
+          return bar_index_linear_probability(word, history) * beta +
+            unigram_probability(word, history) * (1 - beta)
         }
         else if (curr_state == states("END-LINEAR")) {
-          return endbar_index_linear_probability(word, history)
+          return endbar_index_linear_probability(word, history) * beta +
+            unigram_probability(word, history) * (1 - beta)
         }
         else {
           return 0.0
@@ -387,11 +407,27 @@ object BarQuestion {
       y_alpha_value += alpha_values(i)
       println("alpha: "+alpha_values(i)+" -- Perplexity: "+pp)
     }
+    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
+    //Best perplexity
+    lm.alpha = 3.0
+    var beta_values = for(i <- 1 to 100) yield i.toDouble * 0.01
 
-    lm.alpha = 1.0
+    x_perplexity = scala.collection.mutable.MutableList[Double]()
+    var y_beta_value  = scala.collection.mutable.MutableList[Double]()
+
+    for( i <- 0 until beta_values.size) {
+      lm.beta = beta_values(i)
+      var pp = LanguageModel.perplexity(lm, dev)
+
+      x_perplexity += pp
+      y_beta_value += beta_values(i)
+      println("beta: "+beta_values(i)+" -- Perplexity: "+pp)
+    }
+
+
     LanguageModel.sample(lm_my, List("[BAR]"), 100)
 
-    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
+    PlottingStuff.plot_line_stuff(y_beta_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
     //TODO:
 
     //TODO: combine a unigram model with the BAR aware LM through interpolation.
