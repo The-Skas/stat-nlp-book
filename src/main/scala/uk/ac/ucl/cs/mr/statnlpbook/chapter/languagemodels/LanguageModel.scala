@@ -172,6 +172,8 @@ object LanguageModel {
     val result = new ArrayBuffer[String]
     result ++= init
     for (_ <- 0 until amount) {
+      //Take the probability of all words and map them into a list called 'probs'
+      //Here the index ordering of the list 'probs' is equal to 'words'
       val probs = words.map(lm.probability(_, result.takeRight(lm.order - 1): _*))
       result += words(sampleCategorical(probs))
     }
