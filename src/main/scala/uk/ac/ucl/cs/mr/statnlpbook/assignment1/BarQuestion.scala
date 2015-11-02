@@ -124,8 +124,8 @@ object BarQuestion {
     def order = 25
 
     //Weight that can be modified.
-    var alpha:Double = 1.0
-    var beta:Double = 0.0
+    var alpha:Double = 3.0
+    var beta:Double = 0.26
 
     def some = Segmenter
     val states: Map[String, Int] = Map("UNIFORM" -> 0
@@ -399,6 +399,7 @@ object BarQuestion {
     var x_perplexity = scala.collection.mutable.MutableList[Double]()
     var y_alpha_value = scala.collection.mutable.MutableList[Double]()
 
+    lm.beta = 1.0
     for( i <- 0 until alpha_values.size) {
       lm.alpha = alpha_values(i)
       var pp = LanguageModel.perplexity(lm, dev)
@@ -407,7 +408,7 @@ object BarQuestion {
       y_alpha_value += alpha_values(i)
       println("alpha: "+alpha_values(i)+" -- Perplexity: "+pp)
     }
-    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
+    PlottingStuff.plot_line_stuff(y_alpha_value, x_perplexity, "Perplexity -- Per-Distance Index Model 2.5")
     //Best perplexity
     lm.alpha = 3.0
     var beta_values = for(i <- 1 to 100) yield i.toDouble * 0.01
@@ -427,7 +428,7 @@ object BarQuestion {
 
     LanguageModel.sample(lm_my, List("[BAR]"), 100)
 
-    PlottingStuff.plot_line_stuff(y_beta_value, x_perplexity, "Perplexity -- Linear Index Model 2.4")
+    PlottingStuff.plot_line_stuff(y_beta_value, x_perplexity, "Perplexity -- Per-Distance Index Model 2.4")
     //TODO:
 
     //TODO: combine a unigram model with the BAR aware LM through interpolation.
