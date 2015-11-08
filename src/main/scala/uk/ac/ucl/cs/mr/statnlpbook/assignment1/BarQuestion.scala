@@ -372,6 +372,7 @@ object BarQuestion {
     val train = Assignment1Util.loadWords(trainFile).toBuffer
 
 
+    //TODO: parse to remove OOV
 
     //the dev sequence of words
     val dev = Assignment1Util.loadWords(devFile).toBuffer

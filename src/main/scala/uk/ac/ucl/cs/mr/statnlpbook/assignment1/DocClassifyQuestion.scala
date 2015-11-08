@@ -4,57 +4,76 @@ import java.io.File
 import uk.ac.ucl.cs.mr.statnlp2015.assignment1.Assignment1Util.Instance
 import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.{Util, UniformLM, LanguageModel}
 
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ArrayBuffer
-
+import scala.collection.mutable.{HashMap, ArrayBuffer}
+import collection.mutable.{Map => MMap}
 /**
  * @author mbosnjak
  */
 object DocClassifyQuestion {
 
-  val word_counts = new HashMap[String,Double] withDefaultValue 0.0
 
   //An interesting idea:
   //To prevent confusing the ordering of string params..
-  val author_word_counts = new HashMap[(String,String),Double] withDefaultValue 0.0
+  val author_word_counts = HashMap.empty[String,MMap[String,Double]]
+  val author_total_word_counts = new HashMap[String, Double] withDefaultValue 0.0
+  //name -> song_counts
+  val author_song_counts = new HashMap[String, Double] withDefaultValue 0.0
+
   var authors_list:List[String] = Nil
   var hashmap_count_words = new HashMap[String,Double] withDefaultValue 0.0
 
   var vocab:Set[String] = Set.empty
-  var vocab_list:List[String] = Nil
   def learn(author:String, lyrics:String): Unit = {
     val words = lyrics.split(" ")
 
-    vocab_list ++= words
+    //Increment the number of songs the author has.
+    author_song_counts(author) += 1.0
 
     for(word <- words) {
-      author_word_counts((author, word)) += 1.0
-      word_counts(word) += 1.0
+      author_word_counts.getOrElseUpdate(author, HashMap.empty[String,Double].withDefaultValue(0.0))(word) += 1.0
+
+      //The total count of all words for an author.
+      author_total_word_counts(author) += 1.0
+
+      //To gain a list of all unique words
+      vocab += word
 
     }
   }
 
-  def unigram_probability(word: String, history: Seq[String]): Double = {
-    if (vocab(word)) {
-      return (word_counts.getOrElse(word,0.0).toDouble / word_counts.foldLeft(0.0)((sum, t) => sum + t._2))
-    } else{
-      return 0.0
-    }
-  }
 
   def classify(instance: Instance): Option[String] = {
     val words = instance.lyrics.split(" ")
 
     val author_score = new HashMap[String,Double] withDefaultValue 0.0
+
+    val vocab_size:Double = vocab.size.toDouble
+
     for(author <- authors_list) {
       for (word <- words) {
         //Here calculate the prob for each
         //Artist.
         //Append to List
-        var denum = if( word_counts(word) > 0) word_counts(word) else 1.0
-        author_score(author) += (author_word_counts((author, word)).toDouble) / denum
+        if(vocab(word)) {
+          var denum = author_total_word_counts(author)
+
+          //Apply laplace smoothing
+          author_score(author) += Math.log((author_word_counts(author)(word).toDouble + 1.0)
+                                                            /
+                                                    (denum + vocab_size))
+        }
 
       }
+        //Here add author probability
+      val total_songs= author_song_counts.map(_._2).sum
+      val author_probability = author_song_counts(author).toDouble / total_songs
+
+      author_score(author) += Math.log(author_probability)
+
+
+        //Some log author probability
+        //Add Smoothing.
+        //Equation:
     }
 
     val predicted_author = author_score.maxBy(_._2)._1
@@ -73,7 +92,7 @@ object DocClassifyQuestion {
       learn(instance.author.get, instance.lyrics)
     }
 
-    this.authors_list = author_word_counts.map(_._1._1).toList.distinct
+    this.authors_list = author_word_counts.map(_._1).toList.distinct
 
 
     // TODO given an instance, how would you classify it
@@ -83,7 +102,7 @@ object DocClassifyQuestion {
       //? How to train?
       // train
     //predict model with dev data,
-    authors_list = author_word_counts.map(_._1._1).toList.distinct
+    authors_list = author_word_counts.map(_._1).toList.distinct
 
     // execute your classifier
     val predictions = dev.map(i => Instance(i.lyrics, i.author, classify(i)))
