@@ -385,8 +385,12 @@ object BarQuestion {
     val lm_my = MyBarAwareLM(vocab)
     val lm_uniform = UniformProbLM(vocab)
     val lm = BarIndexAwareLM(train.toIndexedSeq, vocab)
+    var perplexity = LanguageModel.perplexity(lm, dev)
 
-    var i_dec = 1.0
+    println("Perplexity -- Bar-Per-Distance Model: "+LanguageModel.perplexity(lm, dev))
+    println("Perplexity -- Bar-Linear Model: "+LanguageModel.perplexity(lm_my, dev))
+
+    /*var i_dec = 1.0
     var _list:List[Double] =  Nil
     for(i <- 0 until 20) {
       _list = i_dec :: _list
@@ -430,10 +434,7 @@ object BarQuestion {
     LanguageModel.sample(lm_my, List("[BAR]"), 100)
 
     PlottingStuff.plot_line_stuff(y_beta_value, x_perplexity, "Perplexity -- Per-Distance Index Model 2.4")
-    //TODO:
 
-    //TODO: combine a unigram model with the BAR aware LM through interpolation.
-    //TODO: Improve the BarAwareLM to give probability 1 to a [BAR] following a [/BAR], and 0 otherwise.
-
+*/
   }
 }
