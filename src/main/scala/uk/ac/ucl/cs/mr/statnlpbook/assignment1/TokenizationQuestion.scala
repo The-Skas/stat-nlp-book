@@ -9,7 +9,6 @@ import org.sameersingh.scalaplot._
 
 import ml.wolfe.nlp.Document
 import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.Util
-import com.quantifind.charts.Highcharts._
 /**
  * This stub is provided as help for you to solve the first question.
  * @author riedel
@@ -22,15 +21,10 @@ object TokenizationQuestion {
     val x = (1 until 100).map(_.toDouble)
     val y = x.map(i => i*i)
 
-    val series = new MemXYSeries(x, y, "Square")
-    val data = new XYData(series)
-    val chart = new XYChart("Powers!", data)
-    val plotter = new GnuplotPlotter(chart)
-    plotter.svg("../", "SomeGraph")
+
 
     //the directory that contains the raw documents
     val dataDir = new File("data")
-    val _Document = Document.fromString("Cool");
     //the file that contains the target gold tokenization
     val goldFile = new File("data/p1/goldtokens.txt")
 
@@ -121,7 +115,9 @@ object TokenizationQuestion {
 
     }
 
-    val mismatch = find_mismatch(zip_result)
+
+    val tup_mismatch = find_mismatch(zip_result)
+    println("\nWhere mismatch occurs: "+tup_mismatch+ " The number is how far into the result does the mismatch occur.")
     def check_regex(test_str: String, regex_expr: String = ""): Any = {
       var temp_tokenizer = tokenizer;
       if(!regex_expr.isEmpty()) {
@@ -129,6 +125,8 @@ object TokenizationQuestion {
       }
       return Util.words(List(temp_tokenizer(Document.fromString(test_str))))
     }
+
+    val mismatch = result.zip(gold).find { case (a, b) => a != b }
     //Your goal is to make sure that mismatch is None
     val regex_test = mismatch match {
       case None => println("Success!")

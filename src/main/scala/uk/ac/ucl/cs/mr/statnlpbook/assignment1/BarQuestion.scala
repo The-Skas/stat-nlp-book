@@ -1,5 +1,4 @@
 package uk.ac.ucl.cs.mr.statnlp2015.assignment1
-import org.jfree.data.statistics.HistogramDataset
 import java.io.File
 import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
 import org.sameersingh.scalaplot._
@@ -9,7 +8,7 @@ import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.{LanguageModel, Unifor
 import scala.collection.immutable.HashMap
 
 /**
- * @author riedel
+ * @author Salman
  */
 object BarQuestion {
 
@@ -363,10 +362,10 @@ object BarQuestion {
 
 
     //The training file we provide you
-    val trainFile = new File("data/p2/p2_train.txt")
+    val trainFile = new File(args(0))
 
     //the dev file we provide you.
-    val devFile = new File("data/p2/p2_dev.txt")
+    val devFile = new File(args(1))
 
     //the training sequence of words
     val train = Assignment1Util.loadWords(trainFile).toBuffer

@@ -7,7 +7,7 @@ import uk.ac.ucl.cs.mr.statnlpbook.chapter.languagemodels.{Util, UniformLM, Lang
 import scala.collection.mutable.{HashMap, ArrayBuffer}
 import collection.mutable.{Map => MMap}
 /**
- * @author mbosnjak
+ * @author Salman
  */
 object DocClassifyQuestion {
 
@@ -83,8 +83,8 @@ object DocClassifyQuestion {
   def main(args: Array[String]): Unit = {
     // load the datasets
 
-    val train = Assignment1Util.loadDataset(new File("data/p3/p3_train.txt"))
-    val dev = Assignment1Util.loadDataset(new File("data/p3/p3_dev.txt"))
+    val train = Assignment1Util.loadDataset(new File(args(0)))
+    val dev = Assignment1Util.loadDataset(new File(args(1)))
     //val test = Assignment1Util.loadDataset(new File(args(2)))
 
 

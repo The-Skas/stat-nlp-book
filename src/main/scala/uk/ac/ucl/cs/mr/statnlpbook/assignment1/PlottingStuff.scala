@@ -1,7 +1,6 @@
 package uk.ac.ucl.cs.mr.statnlp2015.assignment1
 
 
-import com.quantifind.charts.Highcharts._
 import org.sameersingh.scalaplot.{MemXYSeries, XYData, NumericAxis}
 import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
 import org.sameersingh.scalaplot.jfreegraph.JFGraphPlotter
