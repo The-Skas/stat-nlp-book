@@ -25,6 +25,18 @@ object Problem1 {
                             iterations: Int = 2,
                             learningRate:Double = 1.0): Weights = {
     //TODO implement the perceptron trainer
+
+    //First implement default 0 weight for all features.
+
+    var weights:scala.collection.Map[FeatureKey, Double] = scala.collection.Map[FeatureKey, Double]()
+
+    for(label <- my_labels){
+      println(label)
+    }
+
+
+    //Where is the gold value for the weights?
+
     var x = 0
     println("Stop, Hammer Time!")
     return null
@@ -36,6 +48,8 @@ object Problem1 {
    * Results should be similar to the precompiled trainer
    * @param args
    */
+
+  var my_labels:Set[String] = null
   def main (args: Array[String] ) {
 
     val train_dir = "./data/assignment2/bionlp/train"
@@ -58,6 +72,9 @@ object Problem1 {
 
     // get label set
     val triggerLabels = triggerTrain.map(_._2).toSet
+
+    //Skas adds this pixie dust
+    my_labels = triggerTrain.map(_._2).toSet
 
     // define model
     val triggerModel = SimpleClassifier(triggerLabels, defaultTriggerFeatures)
