@@ -25,7 +25,9 @@ object Problem1 {
                             iterations: Int = 2,
                             learningRate:Double = 1.0): Weights = {
     //TODO implement the perceptron trainer
-    ???
+    var x = 0
+    println("Stop, Hammer Time!")
+    return null
   }
 
 
