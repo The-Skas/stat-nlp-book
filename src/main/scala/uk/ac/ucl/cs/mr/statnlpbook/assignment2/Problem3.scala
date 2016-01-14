@@ -40,19 +40,30 @@ object Problem3Triggers {
 
     // define model
     //TODO: change the features function to explore different types of features
-    val triggerModel = SimpleClassifier(triggerLabels, Features.defaultTriggerFeatures)
+    val triggerModel = SimpleClassifier(triggerLabels, Features.myTriggerFeatures)
 
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
-    //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
+//    val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
     val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 2)
-
+    val sortedWeights   = scala.collection.immutable.ListMap(triggerWeights.toSeq.sortBy(_._2):_*)
     // get predictions on dev
     val (triggerDevPred, triggerDevGold) = triggerDev.map { case (trigger, gold) => (triggerModel.predict(trigger, triggerWeights), gold) }.unzip
     // evaluate on dev
     val triggerDevEval = Evaluation(triggerDevGold, triggerDevPred, Set("None"))
     // print evaluation results
     println("Evaluation for trigger classification:")
+
+    println("Top 50")
+    for(i <- sortedWeights.take(100) ){
+      println(i)
+    }
+
+    println("Worst 50")
+    for(i <- sortedWeights.takeRight(100) ){
+      println(i)
+    }
+
     println(triggerDevEval.toString)
 
     ErrorAnalysis(triggerDev.unzip._1,triggerDevGold,triggerDevPred).showErrors(5)
@@ -98,18 +109,28 @@ object Problem3Arguments {
     val argumentLabels = argumentTrain.map(_._2).toSet
 
     // define model
-    val argumentModel = SimpleClassifier(argumentLabels, Features.defaultArgumentFeatures)
+    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
 
     //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
-    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,2)
+    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
 
     // get predictions on dev
     val (argumentDevPred, argumentDevGold) = argumentDev.map { case (arg, gold) => (argumentModel.predict(arg,argumentWeights), gold) }.unzip
     // evaluate on dev
     val argumentDevEval = Evaluation(argumentDevGold, argumentDevPred, Set("None"))
     println("Evaluation for argument classification:")
-    println(argumentDevEval.toString)
 
+    val sortedWeights   = scala.collection.immutable.ListMap(argumentWeights.toSeq.sortBy(_._2):_*)
+
+    println("Top 50")
+    for(i <- sortedWeights.take(100) ){
+      println(i)
+    }
+
+    println("Worst 50")
+    for(i <- sortedWeights.takeRight(100) ){
+      println(i)
+    }
 
     ErrorAnalysis(argumentDev.unzip._1,argumentDevGold,argumentDevPred).showErrors(5)
 

@@ -53,6 +53,9 @@ package object assignment2 {
     for ((k, v) <- f) result += w(k) * v
     result
   }
+
+
+  //Why did he say use twice?
   /**
    * In place addition of a feature vector to a weight vector, `w <- w + scale * f`
    * @param f the feature vector to be added.

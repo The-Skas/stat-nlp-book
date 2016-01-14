@@ -1,6 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment2
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
  * Created by Georgios on 30/10/2015.
@@ -50,8 +51,8 @@ object Problem5{
     // define model
     //TODO: change the features function to explore different types of features
     //TODO: experiment with the unconstrained and constrained (you need to implement the inner search) models
-    val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
-    //val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
+//    val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
+    val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myTriggerFeatures )
 
     // use training algorithm to get weights of model
     val jointWeights = PrecompiledTrainers.trainPerceptron(jointTrain,jointModel.feat,jointModel.predict,2)
@@ -104,7 +105,45 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
                                        ) extends JointModel {
   def predict(x: Candidate, weights: Weights) = {
     //TODO
-    ???
+    def argmax(labels: Set[Label], x: Candidate, weights: Weights, feat:(Candidate,Label)=>FeatureVector) = {
+      val scores = labels.toSeq.map(y => y -> dot(feat(x, y), weights)).toMap withDefaultValue 0.0
+      scores.maxBy(_._2)._1
+    }
+    val bestTrigger = argmax(triggerLabels,x,weights,triggerFeature)
+
+    var bestArguments = new ListBuffer[String]()
+    if(bestTrigger == "None"){
+      (bestTrigger,List.fill(10)("None"))
+    }
+    else {
+      var atleast_one_theme_found:Boolean = false
+
+      for(arg <- x.arguments) {
+        var temp_argLabels = argumentLabels
+        if(bestTrigger != "Regulation"){
+          //Satisfying a constraint
+          temp_argLabels = temp_argLabels - "Cause"
+        }
+        var temp_arg = argmax(temp_argLabels,arg,weights,argumentFeature)
+
+        bestArguments += temp_arg
+
+        if(temp_arg == "Theme") {
+          atleast_one_theme_found = true
+        }
+      }
+      if (atleast_one_theme_found == false){
+        var index_of_none:Integer = bestArguments.indexOf("None")
+
+        if(index_of_none == -1){
+          index_of_none = 0
+        }
+        bestArguments.updated(index_of_none, "Theme")
+      }
+      //Return
+      (bestTrigger, bestArguments)
+    }
+
   }
 
 }

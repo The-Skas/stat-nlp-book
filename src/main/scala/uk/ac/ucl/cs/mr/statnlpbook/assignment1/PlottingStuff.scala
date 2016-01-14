@@ -4,6 +4,7 @@ package uk.ac.ucl.cs.mr.statnlp2015.assignment1
 import org.sameersingh.scalaplot.{MemXYSeries, XYData, NumericAxis}
 import org.sameersingh.scalaplot.gnuplot.GnuplotPlotter
 import org.sameersingh.scalaplot.jfreegraph.JFGraphPlotter
+import org.sameersingh.scalaplot
 import org.sameersingh.scalaplot.XYChart
 /**
  * Created by skas on 10/20/15.

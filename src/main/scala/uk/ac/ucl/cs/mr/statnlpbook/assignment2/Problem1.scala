@@ -1,12 +1,14 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment2
 
 import scala.collection.mutable
+import scala.collection.mutable.HashMap
+import scala.collection.Map
+import uk.ac.ucl.cs.mr.statnlpbook.assignment2.Perceptron_Helpers._
 
 /**
  * Created by Georgios on 11/11/2015.
  */
 object Problem1 {
-
 
   /**
    * Train a linear model using the perceptron algorithm.
@@ -19,6 +21,7 @@ object Problem1 {
    * @tparam Y type of output.
    * @return a linear model trained using the perceptron algorithm.
    */
+
   def trainPerceptron[X, Y](instances: Seq[(X, Y)],
                             feat: (X, Y) => FeatureVector,
                             predict: (X, Weights) => Y,
@@ -28,18 +31,54 @@ object Problem1 {
 
     //First implement default 0 weight for all features.
 
-    var weights:scala.collection.Map[FeatureKey, Double] = scala.collection.Map[FeatureKey, Double]()
+    var weights:scala.collection.Map[FeatureKey, Double] = HashMap.empty[FeatureKey,Double].withDefaultValue(0.0)
+
+    feat.apply(instances(0)._1, instances(0)._2)
+
 
     for(label <- my_labels){
       println(label)
     }
+    for((x,y) <- instances){
+      println("key: "+x+ "-- Value: "+ y)
+      println("cool")
+      var temp_predict = predict(x, weights)
+
+      //IF Incorrect prediction.
+      if(x.asInstanceOf[Candidate].gold != temp_predict){
+
+        //Perceptron
+        //Do something to the weights
+
+        //φ(xi, cˆ)
+        val feat_pred = feat.apply(x, temp_predict)
+
+        // φ (xi, ci)
+        val gold_pred = feat.apply(x, y)
+
+        // λ ← weights + ( φ (xi, ci) − φ (xi, cˆ) )
+        weights = HashMap.empty[FeatureKey,Double].withDefaultValue(0.0) ++ add(weights ,subtract(gold_pred, feat_pred))
+
+        println("Different: gold = "+ x + " -- value = "+temp_predict)
 
 
+      }
+      //Look for case where gold != value
+    }
+    //feat(instances(0)) -> this should give us the FeatureVector
+
+    //No need to otpimize iterations
+    //Uses learning rate
+
+    //use MutableWeight
     //Where is the gold value for the weights?
 
     var x = 0
     println("Stop, Hammer Time!")
-    return null
+
+    //Should return weights
+
+    return weights
   }
 
 
@@ -64,7 +103,7 @@ object Problem1 {
 
     // get candidates and make tuples with gold
     // read the specifications of the method for different subsampling thresholds
-    // no subsampling for dev/test!
+    // no subsampling for dev/test! Skas: Here sub sampling is to reduce the time, so were only taking 2% of data
     def getTriggerCandidates(docs: Seq[Document]) = docs.flatMap(_.triggerCandidates(0.02))
     def getTestTriggerCandidates(docs: Seq[Document]) = docs.flatMap(_.triggerCandidates())
     val triggerTrain = preprocess(getTriggerCandidates(trainDocs))
