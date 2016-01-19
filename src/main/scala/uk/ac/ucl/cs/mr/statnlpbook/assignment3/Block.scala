@@ -104,21 +104,27 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector] with GaussianDefaultInitialization {
-  var param: Vector = ??? //todo: initialize using default initialization
-  val gradParam: Vector = ??? //todo: initialize with zeros
+  var param: Vector = initialize(() => scala.util.Random.nextFloat())
+  val gradParam: Vector = initialize(() => 0) //todo: initialize with zeros
   /**
    * @return the current value of the vector parameter and caches it into output
    */
-  def forward(): Vector = ???
+  def forward(): Vector = {
+    return null
+  }
   /**
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
-  def backward(gradient: Vector): Unit = ???
+  def backward(gradient: Vector): Unit = {
+    return null
+  }
   /**
    * Resets gradParam to zero
    */
-  def resetGradient(): Unit = ???
+  def resetGradient(): Unit = {
+    return null
+  }
   /**
    * Updates param using the accumulated gradient. Clips the gradient to the interval (-clip, clip) before the update
    * @param learningRate learning rate used for the update
