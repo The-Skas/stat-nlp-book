@@ -40,6 +40,7 @@ object GradientChecker extends App {
         case v: Vector =>
           val tmp = v(index)
           v(index) = tmp + eps
+          //Get model result
           result = model.forward()
           v(index) = tmp
         case m: Matrix =>
@@ -53,9 +54,17 @@ object GradientChecker extends App {
     }
 
     for (i <- 0 until gradient.activeSize) {
-      //todo: your code goes here!
-      val result = wiggledForward(i, EPSILON)
-      val gradientExpected: Double = result
+      //∂gθ    gθ(x + e ) − gθ(x − e)
+      //--- ≈  ---------------------
+      //∂xi           2 ∗ e
+
+
+
+      val plus_epsilon = wiggledForward(i, EPSILON)
+      val min_epsilon  = wiggledForward(i, -EPSILON)
+      val gradientApprox = (plus_epsilon - min_epsilon) / 2 * EPSILON
+
+      val gradientExpected: Double = gradientApprox
 
       avgError = avgError + math.abs(gradientExpected - gradient(i))
 
@@ -74,9 +83,20 @@ object GradientChecker extends App {
     * A very silly block to test if gradient checking is working.
     * Will only work if the implementation of the Dot block is already correct
     */
-  val a = vec(-1.5, 1.0, 1.5, 0.5)
-  val b = VectorParam(4)
-  b.set(vec(1.0, 2.0, -0.5, 2.5))
+  println("Dot Gradient: ")
+  val a = VectorParam(2)
+  val b = VectorParam(2)
+  a.set(vec(-2.0,4.0, 3.0))
+  b.set(vec(1.0,3.0, 2.0))
   val simpleBlock = Dot(a, b)
+  println("Dot Product: "+ simpleBlock.forward())
   GradientChecker(simpleBlock, b)
+  GradientChecker(simpleBlock, a)
+
+  println("Sum Gradient: ")
+  val simpleSum = Sum(Seq(a,b))
+  println("Sum: "+simpleSum.forward())
+
+
+
 }

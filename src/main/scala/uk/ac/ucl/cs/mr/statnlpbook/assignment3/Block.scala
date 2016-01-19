@@ -81,6 +81,7 @@ case class VectorConstant(arg: Vector) extends Block[Vector] {
  */
 case class DoubleSum(args: Block[Double]*) extends Block[Double] {
   def forward(): Double = {
+    //_.forward() -- returns the acctual double value
     output = args.map(_.forward()).sum
     output
   }
@@ -110,20 +111,23 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
    * @return the current value of the vector parameter and caches it into output
    */
   def forward(): Vector = {
-    return null
+    output = param
+    output
   }
   /**
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
   def backward(gradient: Vector): Unit = {
-    return null
+    gradParam += gradient
   }
   /**
    * Resets gradParam to zero
    */
   def resetGradient(): Unit = {
-    return null
+    for(i <- 0 until gradParam.activeSize) {
+      gradParam(i) = 0.0
+    }
   }
   /**
    * Updates param using the accumulated gradient. Clips the gradient to the interval (-clip, clip) before the update
@@ -149,9 +153,21 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
  * @param args a sequence of blocks that evaluate to vectors
  */
 case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
-  def forward(): Vector = ???
-  def backward(gradient: Vector): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Vector = {
+    //Could be wrong code, I mean what should forward return?
+    var endVector = args(0).forward()
+    for(i <- 1 until args.size){
+      endVector :+= args(i).forward()
+    }
+    //todo: make sure formula is correct
+    endVector
+  }
+  def backward(gradient: Vector): Unit = {
+    args.foreach(_.backward(gradient))
+  }
+  def update(learningRate: Double): Unit = {
+    args.foreach(_.update(learningRate))
+  }
 }
 
 /**
@@ -160,9 +176,23 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
  * @param arg2 right block that evaluates to a vector
  */
 case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
-  def forward(): Double = ???
-  def backward(gradient: Double): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Double = {
+    var dot_product = 0.0
+    val arg1_vec = arg1.forward()
+    val arg2_vec = arg2.forward()
+    for(i <- 0 until arg1_vec.activeSize){
+      dot_product += arg1_vec.output(i) * arg2_vec.output(i)
+    }
+    return dot_product
+  }
+  def backward(gradient: Double): Unit = {
+    arg1.forward().foreach(_.backward(gradient))
+    arg2.forward().foreach(_.backward(gradient))
+  }
+  def update(learningRate: Double): Unit = {
+    arg1.update(learningRate)
+    arg2.update(learningRate)
+  }
 }
 
 /**
@@ -170,9 +200,15 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
  * @param arg a block that evaluates to a double
  */
 case class Sigmoid(arg: Block[Double]) extends Block[Double] {
-  def forward(): Double = ???
-  def backward(gradient: Double): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Double = {
+    breeze.numerics.sigmoid(arg.forward())
+  }
+  def backward(gradient: Double): Unit = {
+    arg.backward(gradient)
+  }
+  def update(learningRate: Double): Unit = {
+    arg.update(learningRate)
+  }
 }
 
 /**
