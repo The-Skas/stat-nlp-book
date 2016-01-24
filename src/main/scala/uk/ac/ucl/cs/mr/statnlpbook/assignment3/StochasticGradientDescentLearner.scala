@@ -13,6 +13,9 @@ object StochasticGradientDescentLearner extends App {
         val (sentence, target) = SentimentAnalysisCorpus.getExample(corpus)
         //todo: update the parameters of the model and accumulate the loss
         ???
+        //Forward
+        //Backward
+        //Update using the gradient from backward
       }
       epochHook(i, accLoss)
     }

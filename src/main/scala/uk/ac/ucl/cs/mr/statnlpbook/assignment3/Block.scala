@@ -1,7 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
 import breeze.numerics.{log, sigmoid, tanh} //yes, you will need them ;)
-import breeze.linalg.{DenseMatrix => Matrix, DenseVector => Vector}
+import breeze.linalg.DenseMatrix
 
 /**
  * @author rockt
@@ -52,6 +52,11 @@ trait GaussianDefaultInitialization extends DefaultInitialization {
   def defaultInitialization(): Double = random.nextGaussian() * 0.1
 }
 
+trait VectorDerive {
+  def deriveVector(vec: Vector): Unit = {
+
+  }
+}
 /**
  * A simple block that represents a constant double value
  * @param arg the constant double value
@@ -105,20 +110,22 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector] with GaussianDefaultInitialization {
-  var param: Vector = initialize(() => scala.util.Random.nextFloat())
+  var param: Vector = initialize(() => defaultInitialization)
   val gradParam: Vector = initialize(() => 0) //todo: initialize with zeros
   /**
    * @return the current value of the vector parameter and caches it into output
    */
   def forward(): Vector = {
+
     output = param
-    output
+    output.copy
   }
   /**
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
   def backward(gradient: Vector): Unit = {
+    //Shouldnt it pass all the gradient into all inputs
     gradParam += gradient
   }
   /**
@@ -148,6 +155,27 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
   }
 }
 
+//MY Class vector sum
+case class MySum(vec: ParamBlock[Vector]) extends Block[Double] {
+  def forward(): Double = {
+    //Could be wrong code, I mean what should forward return?
+
+    //todo: make sure formula is correct
+    output = vec.forward().sum
+    output
+  }
+  def backward(gradient: Double): Unit = {
+    vec.backward(breeze.linalg.DenseVector.fill(vec.gradParam.activeSize){
+      gradient
+    })
+  }
+  def update(learningRate: Double): Unit = {
+    vec.update(learningRate)
+  }
+}
+
+
+
 /**
  * A block representing the sum of vectors
  * @param args a sequence of blocks that evaluate to vectors
@@ -160,7 +188,8 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
       endVector :+= args(i).forward()
     }
     //todo: make sure formula is correct
-    endVector
+    output = endVector
+    output
   }
   def backward(gradient: Vector): Unit = {
     args.foreach(_.backward(gradient))
@@ -176,18 +205,32 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
  * @param arg2 right block that evaluates to a vector
  */
 case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
-  def forward(): Double = {
+  def dotProduct(vec1:Vector, vec2:Vector): Double = {
     var dot_product = 0.0
-    val arg1_vec = arg1.forward()
-    val arg2_vec = arg2.forward()
-    for(i <- 0 until arg1_vec.activeSize){
-      dot_product += arg1_vec.output(i) * arg2_vec.output(i)
+
+    for(i <- 0 until vec1.activeSize){
+      dot_product += vec1(i) * vec2(i)
     }
     return dot_product
   }
+
+  def forward(): Double = {
+    return dotProduct(arg1.forward(), arg2.forward())
+  }
+
   def backward(gradient: Double): Unit = {
-    arg1.forward().foreach(_.backward(gradient))
-    arg2.forward().foreach(_.backward(gradient))
+    val vec1= arg1.forward()
+    //Vec1 differentiate product
+    val vec2 = arg2.forward()
+
+    val vec2_differ = vec1.sum
+    val vec1_differ = vec2.sum
+
+
+    //Calculates the differential
+    arg1.backward(breeze.linalg.DenseVector.fill(vec1.length){vec1_differ * gradient})
+
+    arg2.backward(breeze.linalg.DenseVector.fill(vec2.length){vec2_differ * gradient})
   }
   def update(learningRate: Double): Unit = {
     arg1.update(learningRate)
@@ -204,7 +247,12 @@ case class Sigmoid(arg: Block[Double]) extends Block[Double] {
     breeze.numerics.sigmoid(arg.forward())
   }
   def backward(gradient: Double): Unit = {
-    arg.backward(gradient)
+    //s(x)(1-(s(x))
+    val pos_sig = breeze.numerics.sigmoid(arg.forward())
+    val neg_sig = 1.0 - breeze.numerics.sigmoid(arg.forward())
+    val deriv_sig = pos_sig * neg_sig
+
+    arg.backward(deriv_sig * gradient)
   }
   def update(learningRate: Double): Unit = {
     arg.update(learningRate)
