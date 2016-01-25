@@ -273,31 +273,29 @@ case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends
 
     var arg_val = arg.forward()
 
-    val left_operation = math.pow(arg_val, 2.0)
-//    val left_operation = -y * log( arg_val)
+    val left_operation = -y * math.log10( arg_val)
 
-//
-//    if(arg_val >= 1.0){
-//      arg_val = 1.0 - GradientChecker.EPSILON
-//    }
-//    val right_operation = (1.0 - y) * log( 1.0 - arg_val)
 
-    left_operation
+    if(arg_val >= 1.0){
+      arg_val = 1.0 - 1e-8
+    }
+    val right_operation = (1.0 - y) * log( 1.0 - arg_val)
+
+    left_operation - right_operation
   }
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
   def backward(): Unit = {
     val e = math.E
     val y = target
-    val ln_10 = math.log(10) / math.log(e)
-
-    val left_operation =2 * arg.forward()
-
-//    val left_operation =       -y * (1.0 / (ln_10 * (arg.forward())))
-//    val right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.forward() - 1.0)))
+    val ln_10 = math.log10(10) / math.log10(e)
 
 
-    arg.backward(left_operation)
+    val left_operation =       -y * (1.0 / (ln_10 * (arg.forward())))
+    val right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.forward() - 1.0)))
+
+
+    arg.backward(left_operation - right_operation)
   }
   def update(learningRate: Double): Unit = {
     arg.update(learningRate)
@@ -318,7 +316,11 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
     val losses = args.map(arg => {
       val in = arg.forward()
       in match {
-        case v: Vector => ???
+        case v: Vector =>
+          for(i <- 0 until v.activeSize){
+            v(i) = v(i)* (strength/2.0)
+            ???
+          }
         case w: Matrix => ???
       }
     })
