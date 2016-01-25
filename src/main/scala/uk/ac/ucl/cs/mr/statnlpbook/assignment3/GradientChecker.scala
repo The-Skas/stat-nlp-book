@@ -109,6 +109,10 @@ object GradientChecker extends App {
   GradientChecker(sigmoid, b)
 
 
+  val neglogBlock = NegativeLogLikelihoodLoss(Dot(a, b), 1.0)
+  println("Negative Log like Gradient")
+  GradientChecker(neglogBlock, b)
+
 
 
 
