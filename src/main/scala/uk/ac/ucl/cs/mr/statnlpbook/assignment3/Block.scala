@@ -165,6 +165,7 @@ case class MySum(vec: ParamBlock[Vector]) extends Block[Double] {
     output
   }
   def backward(gradient: Double): Unit = {
+
     vec.backward(breeze.linalg.DenseVector.fill(vec.gradParam.activeSize){
       gradient
     })
@@ -223,14 +224,16 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
     //Vec1 differentiate product
     val vec2 = arg2.forward()
 
-    val vec2_differ = vec1.sum
-    val vec1_differ = vec2.sum
+    vec1 :*= gradient
+
+    vec2 :*= gradient
+
 
 
     //Calculates the differential
-    arg1.backward(breeze.linalg.DenseVector.fill(vec1.length){vec1_differ * gradient})
+    arg1.backward(vec2)
 
-    arg2.backward(breeze.linalg.DenseVector.fill(vec2.length){vec2_differ * gradient})
+    arg2.backward(vec1)
   }
   def update(learningRate: Double): Unit = {
     arg1.update(learningRate)

@@ -62,7 +62,7 @@ object GradientChecker extends App {
 
       val plus_epsilon = wiggledForward(i, EPSILON)
       val min_epsilon  = wiggledForward(i, -EPSILON)
-      val gradientApprox = (plus_epsilon - min_epsilon) / 2.0 * EPSILON
+      val gradientApprox = (plus_epsilon - min_epsilon) / (2.0 * EPSILON)
 
       val gradientExpected: Double = gradientApprox
 
@@ -92,7 +92,7 @@ object GradientChecker extends App {
   a.set(vec(-2.0,4.0, 3.0))
   b.set(vec(5.0,3.0, 2.0))
 
-  val sigmoidBlock = Sigmoid(MySum(b))
+  val sigmoidBlock = Dot(b, vec(1.0,1.0,1.0))
   println("Sigmoid Forward 5.0 = ")
   GradientChecker(sigmoidBlock, b)
 
@@ -103,10 +103,10 @@ object GradientChecker extends App {
   GradientChecker(simpleBlock, a)
 
   //Cant do it for this.
-  val simpleSum = Sum(Seq(a,b))
-  println("Sum Forward: "+simpleSum.forward())
+  val sigmoid = Sigmoid(Dot(a, b))
+  println("Sigmoid: "+sigmoid.forward())
   //println("Sum Gradient: ")
-  //GradientChecker(simpleSum, a)
+  GradientChecker(sigmoid, b)
 
 
 
