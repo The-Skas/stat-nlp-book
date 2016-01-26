@@ -26,7 +26,7 @@ object Main extends App {
       iter, accLoss, 100 * Evaluator(model, trainSetName), 100*Evaluator(model, validationSetName)))
   }
 
-  StochasticGradientDescentLearner(model, trainSetName, 100, learningRate, epochHook)
+  StochasticGradientDescentLearner(model, trainSetName, 1, learningRate, epochHook)
 
 
 

@@ -95,7 +95,6 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
   }
 
   def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {
-    var output = VectorParam(words(0).forward().activeSize)
 
 //    for( i <- 0 until words.length){
 //      output.param :+= words(i).forward()
