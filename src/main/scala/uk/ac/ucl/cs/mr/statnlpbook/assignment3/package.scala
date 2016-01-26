@@ -23,6 +23,7 @@ package object assignment3 {
   implicit def doubleToDoubleConstant(d: Double): DoubleConstant = DoubleConstant(d)
   
   def vec(values: Double*): Vector = new Vector(values.toArray)
+
   def mat(dim1: Int, dim2: Int)(values: Double*): Matrix = new Matrix(dim1, dim2, values.toArray)
 
   def randVec(dim: Int, dist: () => Double): Vector = vec((0 until dim).map(i => dist()):_*)

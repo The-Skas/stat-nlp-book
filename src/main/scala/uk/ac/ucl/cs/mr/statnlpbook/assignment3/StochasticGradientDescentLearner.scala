@@ -12,7 +12,15 @@ object StochasticGradientDescentLearner extends App {
         if (j % 1000 == 0) print(s"Iter $j\r")
         val (sentence, target) = SentimentAnalysisCorpus.getExample(corpus)
         //todo: update the parameters of the model and accumulate the loss
-        ???
+        val loss = model.loss(sentence, target)
+        val score = loss.forward()
+
+        loss.backward()
+        loss.update(learningRate)
+
+        //for(word <- sentence) {
+          //model.wordToVector(word).update
+        //}
         //Forward
         //Backward
         //Update using the gradient from backward
@@ -20,4 +28,6 @@ object StochasticGradientDescentLearner extends App {
       epochHook(i, accLoss)
     }
   }
+  SentimentAnalysisCorpus.getExample("train")
 }
+

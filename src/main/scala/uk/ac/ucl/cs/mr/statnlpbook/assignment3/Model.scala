@@ -80,15 +80,36 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
   /**
    * We are also going to need another global vector parameter
    */
-  vectorParams += "param_w" -> VectorParam(???)
 
-  def wordToVector(word: String): Block[Vector] = ???
+  //param_w is the weight parameter, it should be the weight for each
+  //word found. Issue is.. How would I be able to get the weight of a word?
 
-  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = ???
+  //So this should be defaulted to 1.0 for each parameter...
+  //
+  val WEIGHT_STR = "param_w"
+  LookupTable.addTrainableWordVector(WEIGHT_STR)
 
-  def scoreSentence(sentence: Block[Vector]): Block[Double] = ???
+  def wordToVector(word: String): Block[Vector] = {
+    //word
+    return LookupTable.addTrainableWordVector(word )
+  }
 
-  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization(regularizationStrength, ???)
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {
+    var output = VectorParam(words(0).forward().activeSize)
+
+//    for( i <- 0 until words.length){
+//      output.param :+= words(i).forward()
+//    }
+
+    return Sum(words)
+    //return VectorConstant(output.param)
+  }
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = {
+    return Sigmoid(Dot(sentence, LookupTable.get(WEIGHT_STR)))
+  }
+
+  def regularizer(words: Seq[Block[Vector]]): Loss = L2Regularization(regularizationStrength, words:_*)
 }
 
 
