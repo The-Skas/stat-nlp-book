@@ -313,26 +313,58 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
     /**
      * Calculates the loss individually for every vector/matrix parameter in args
      */
+    var total_reg:Double = 0.0
+
     val losses = args.map(arg => {
       val in = arg.forward()
       in match {
-        case v: Vector =>
-          for(i <- 0 until v.activeSize){
-            v(i) = v(i)* (strength/2.0)
-            ???
+        case v: Vector => {
+          var norm: Double = 0.0
+          for (i <- 0 until v.activeSize) {
+            norm += v(i) * v(i)
           }
-        case w: Matrix => ???
+          total_reg += (strength / 2.0) * norm
+        }
+        case w: Matrix => {
+          var norm: Double = 0.0
+          for (i <- 0 until w.rows) {
+            for(j <-0 until w.cols) {
+              norm += w(i,j) * w(i,j)
+            }
+          }
+          total_reg += (strength / 2.0) * norm
+        }
       }
     })
-    output = ??? //sums the losses up
+    output = total_reg //sums the losses up
     output
   }
-  def update(learningRate: Double): Unit = ???
+  def update(learningRate: Double): Unit = {
+    args.map(arg => {
+      //Is this correct?
+      arg.update(learningRate)
+    })
+  }
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
   def backward(): Unit = args.foreach(x => x.backward((x.forward() match {
-    case v: Vector => ???
-    case w: Matrix => ???
+    case v: Vector => {
+      var deriv_norm: Double = 0.0
+      for (i <- 0 until v.activeSize) {
+        v(i) = (strength / 2.0) * v(i) * 2.0
+      }
+      v //will this return v
+    }
+    case w: Matrix => {
+      var deriv_norm: Double = 0.0
+      for (i <- 0 until w.rows) {
+        for(j <-0 until w.cols) {
+          w(i,j) = (strength / 2.0) * w(i,j) * 2.0
+        }
+      }
+      w
+    }
+    // will return w
   }).asInstanceOf[P]))
 }
 
