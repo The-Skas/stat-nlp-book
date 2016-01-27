@@ -1,5 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment3
 
+import uk.ac.ucl.cs.mr.statnlp2015.assignment1.PlottingStuff
+
 import scala.collection.mutable
 
 /**
@@ -31,10 +33,31 @@ object Main extends App {
   //val model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
 
-  var x_epochs = new mutable.MutableList
+  var x_epochs = new mutable.MutableList[(Double)]
+  var y_train  = new mutable.MutableList[(Double)]
+  var y_test  =  new mutable.MutableList[(Double)]
+
+  var FINAL_EPOCH:Int = 10
   def epochHook(iter: Int, accLoss: Double): Unit = {
+    if (iter == 0) {
+      x_epochs = new mutable.MutableList[(Double)]
+      y_train = new mutable.MutableList[(Double)]
+      y_test  =  new mutable.MutableList[(Double)]
+
+    }
+
+
     val trainSetScore = 100 * Evaluator(model, trainSetName)
     val validSetScore = 100*Evaluator(model, validationSetName)
+
+    x_epochs += iter
+    y_train += trainSetScore
+    y_test  += validSetScore
+
+    if(iter == FINAL_EPOCH ){
+      PlottingStuff.plot_line_stuff_2(x_epochs, y_train, x_epochs, y_test, "Validation")
+    }
+
 
     var result_str = "Epoch %4d\tLoss %8.4f\tTrain Acc %4.2f\tDev Acc %4.2f".format(
       iter, accLoss, trainSetScore, validSetScore)

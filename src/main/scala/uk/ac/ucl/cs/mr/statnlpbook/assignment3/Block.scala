@@ -414,12 +414,26 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
 case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamBlock[Matrix] with GaussianDefaultInitialization {
-  var param: Matrix = ???
-  val gradParam: Matrix = ???
-  def forward(): Matrix = ???
-  def backward(gradient: Matrix): Unit = ???
-  def resetGradient(): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  var param: Matrix = initialize(() => defaultInitialization())
+  val gradParam: Matrix = initialize(() => 0.0)
+  def forward(): Matrix = {
+    output = param
+    output
+  }
+  def backward(gradient: Matrix): Unit = {
+    gradParam += gradient
+  }
+  def resetGradient(): Unit = {
+    for (i <- 0 until gradParam.rows) {
+      for (j <- 0 until gradParam.cols) {
+        gradParam(i,j) = 0
+      }
+    }
+  }
+  def update(learningRate: Double): Unit = {
+    param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate)
+    resetGradient()
+  }
   def initialize(dist: () => Double): Matrix = {
     param = randMat(dim1, dim2, dist)
     param
@@ -432,7 +446,14 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
  * @param arg2 the right block evaluation to a vector
  */
 case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
-  def forward(): Vector = ???
+  def forward(): Vector = {
+    val matrx = arg1.forward()
+    for (i <- 0 until matrx.rows) {
+      for (j <- 0 until matrx.cols) {
+        val vec = matrx(i+1, 1 to matrx.cols)
+      }
+    }
+  }
   def backward(gradient: Vector): Unit = ???
   def update(learningRate: Double): Unit = ???
 }

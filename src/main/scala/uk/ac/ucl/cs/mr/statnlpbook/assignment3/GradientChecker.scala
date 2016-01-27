@@ -45,6 +45,7 @@ object GradientChecker extends App {
           v(index) = tmp
         case m: Matrix =>
           val (row, col) = m.rowColumnFromLinearIndex(index)
+
           val tmp = m(row, col)
           m(row, col) = tmp + eps
           result = model.forward()
