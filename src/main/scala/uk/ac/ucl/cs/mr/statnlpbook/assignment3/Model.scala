@@ -87,11 +87,11 @@ class SumOfWordVectorsModel(embeddingSize: Int, regularizationStrength: Double =
   //So this should be defaulted to 1.0 for each parameter...
   //
   val WEIGHT_STR = "param_w"
-  LookupTable.addTrainableWordVector(WEIGHT_STR)
+  LookupTable.addTrainableWordVector(WEIGHT_STR, embeddingSize)
 
   def wordToVector(word: String): Block[Vector] = {
     //word
-    return LookupTable.addTrainableWordVector(word )
+    return LookupTable.addTrainableWordVector(word , embeddingSize)
   }
 
   def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {

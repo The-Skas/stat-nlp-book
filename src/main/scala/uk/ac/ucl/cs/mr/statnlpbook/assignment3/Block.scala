@@ -104,6 +104,7 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * Problem 2
  */
 
+
 /**
  * A block representing a vector parameter
  * @param dim dimension of the vector
@@ -126,7 +127,11 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
    */
   def backward(gradient: Vector): Unit = {
     //Shouldnt it pass all the gradient into all inputs
+    if(IsNaN(gradient)){
+      val x = "Break_me"
+    }
     gradParam += gradient
+
   }
   /**
    * Resets gradParam to zero
@@ -141,8 +146,23 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
    * @param learningRate learning rate used for the update
    */
   def update(learningRate: Double): Unit = {
+    val old_param = param.copy
     param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate) //in-place
+
+    if(IsNaN(param)){
+      val x = "Break_me"
+    }
+
     resetGradient()
+  }
+
+  def IsNaN(a_vec:Vector): Boolean ={
+    for(i <- 0 until a_vec.activeSize) {
+      if(a_vec(i).isNaN()){
+        return true
+      }
+    }
+    return false
   }
   /**
    * Initializes the parameter randomly using a sampling function
@@ -154,6 +174,7 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
     param
   }
 }
+
 
 //MY Class vector sum
 case class MySum(vec: ParamBlock[Vector]) extends Block[Double] {
@@ -291,8 +312,20 @@ case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends
     val ln_10 = math.log10(10) / math.log10(e)
 
 
-    val left_operation =       -y * (1.0 / (ln_10 * (arg.forward())))
-    val right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.forward() - 1.0)))
+    var left_operation =       -y * (1.0 / (ln_10 * (arg.forward())))
+
+
+    var right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.forward() - 1.0)))
+
+    if(left_operation.isNaN()  || left_operation.isInfinity){
+      left_operation = 0.0
+    }
+
+    if(right_operation.isNaN() || right_operation.isInfinity ){
+      right_operation = 0.0
+    }
+
+
 
 
     arg.backward(left_operation - right_operation)

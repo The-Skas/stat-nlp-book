@@ -56,4 +56,19 @@ object PlottingStuff {
     val plotter = new JFGraphPlotter(chart)
     plotter.gui()
   }
+
+  def plot_line_stuff_2(x_1:Seq[Double],y_1:Seq[Double],
+                        x_2:Seq[Double],y_2:Seq[Double], title:String ) {
+
+
+    val series = new MemXYSeries(x_1, y_1, title)
+    val _data = new XYData(series)
+    _data += new MemXYSeries(x_2, y_2, title)
+
+    val chart = new XYChart(title,_data)
+    chart.showLegend = true
+
+    val plotter = new JFGraphPlotter(chart)
+    plotter.gui()
+  }
 }
