@@ -17,8 +17,8 @@ object Main extends App {
   var best_parameters = new mutable.MutableList[(Double,String)]()
 
 
-  var learningRate = 0.01
-  var vectorRegularizationStrength = 0.01
+  var learningRate = 0.001
+  var vectorRegularizationStrength = 0.05
 
   val matrixRegularizationStrength = 0.0
 
@@ -36,11 +36,12 @@ object Main extends App {
   var x_epochs = new mutable.MutableList[(Double)]
   var y_train  = new mutable.MutableList[(Double)]
   var y_test  =  new mutable.MutableList[(Double)]
-
-  var FINAL_EPOCH:Int = 10
+  var x_epochs_2 = new mutable.MutableList[(Double)]
+  var FINAL_EPOCH:Int = 100
   def epochHook(iter: Int, accLoss: Double): Unit = {
     if (iter == 0) {
       x_epochs = new mutable.MutableList[(Double)]
+      x_epochs_2 = new mutable.MutableList[(Double)]
       y_train = new mutable.MutableList[(Double)]
       y_test  =  new mutable.MutableList[(Double)]
 
@@ -51,11 +52,12 @@ object Main extends App {
     val validSetScore = 100*Evaluator(model, validationSetName)
 
     x_epochs += iter
+    x_epochs_2 += iter
     y_train += trainSetScore
     y_test  += validSetScore
 
-    if(iter == FINAL_EPOCH ){
-      PlottingStuff.plot_line_stuff_2(x_epochs, y_train, x_epochs, y_test, "Validation")
+    if(iter == FINAL_EPOCH-1 ){
+      PlottingStuff.plot_line_stuff_2(x_epochs, y_train, x_epochs_2, y_test,"Train", "Validation")
     }
 
 
@@ -70,8 +72,8 @@ object Main extends App {
   }
 
 
-  gridSearch(Seq(10,15,20),Seq(.001,  0.01, 0.1), Seq(0.001 ,0.01, 0.1) )
-  //StochasticGradientDescentLearner(model, trainSetName, 6, learningRate, epochHook)
+  //gridSearch(Seq(10,15,20),Seq(.001,  0.01, 0.1), Seq(0.001 ,0.01, 0.1) )
+  StochasticGradientDescentLearner(model, trainSetName, FINAL_EPOCH, learningRate, epochHook)
 
   def gridSearch(wordDims:Seq[Int], reguliser_params:Seq[Double] , learning_params:Seq[Double]): Unit = {
     for(dim <- wordDims) {

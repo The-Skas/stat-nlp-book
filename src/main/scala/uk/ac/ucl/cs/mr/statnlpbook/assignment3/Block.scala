@@ -447,15 +447,33 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
  */
 case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
   def forward(): Vector = {
+    var final_vec:Vector = arg2.forward().copy
     val matrx = arg1.forward()
     for (i <- 0 until matrx.rows) {
-      for (j <- 0 until matrx.cols) {
-        val vec = matrx(i+1, 1 to matrx.cols)
+
+      val vec:Vector = matrx(i, i to matrx.cols-1).t
+      val product = outer(vec, arg2.forward())
+
+      var sum:Double = 0
+      for(j <- 0 until vec.activeSize) {
+        sum += product(j,j)
       }
+
+      final_vec(i) = sum
+      print("Yep")
     }
+    //Incorrect
+    output = final_vec
+    return output
+
   }
-  def backward(gradient: Vector): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def backward(gradient: Vector): Unit = {
+
+  }
+  def update(learningRate: Double): Unit = {
+    arg1.update(learningRate)
+    arg2.update(learningRate)
+  }
 }
 
 /**
@@ -463,9 +481,25 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
  * @param arg a block evaluating to a vector
  */
 case class Tanh(arg: Block[Vector]) extends Block[Vector] {
-  def forward(): Vector = ???
-  def backward(gradient: Vector): Unit = ???
-  def update(learningRate: Double): Unit = ???
+  def forward(): Vector = {
+    output = arg.forward().copy
+    for(i <- 0 until output.activeSize){
+      output(i) = math.tanh(output(i))
+    }
+    return output
+  }
+  def backward(gradient: Vector): Unit = {
+    //deriv(tanh(x)) = 1 - tan2(x)
+    output = arg.forward().copy
+    for(i <- 0 until output.activeSize){
+      output(i) = 1.0 -  (math.tanh(output(i)) * math.tanh(output(i)))
+    }
+
+    arg.backward(output :* gradient)
+  }
+  def update(learningRate: Double): Unit = {
+    arg.update(learningRate)
+  }
 }
 
 

@@ -118,7 +118,14 @@ object GradientChecker extends App {
   //L2Regularization
   val regBlock = L2Regularization(1.0, b)
   println("L2 Reg Gradient")
-  GradientChecker(regBlock, b)
+
+
+  //Matrix checker:
+  println("Matrix gradient:")
+  var matrxParam = MatrixParam(3,3)
+  matrxParam.set(mat(3,3)(1,2,3,4,5,6,7,8,9))
+  val tanhBlock = Dot(a,Tanh( b))
+  GradientChecker(tanhBlock, b)
 
 
 
