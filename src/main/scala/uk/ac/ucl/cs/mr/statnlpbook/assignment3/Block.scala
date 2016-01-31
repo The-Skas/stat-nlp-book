@@ -207,6 +207,7 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
     //Could be wrong code, I mean what should forward return?
     var endVector = args(0).forward()
     for(i <- 1 until args.size){
+      //element wise sum
       endVector :+= args(i).forward()
     }
     //todo: make sure formula is correct
@@ -449,14 +450,15 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
   def forward(): Vector = {
     var final_vec:Vector = arg2.forward().copy
     val matrx = arg1.forward()
+    val arg_vec = arg2.forward()
     for (i <- 0 until matrx.rows) {
 
-      val vec:Vector = matrx(i, i to matrx.cols-1).t
-      val product = outer(vec, arg2.forward())
+      //val vec:Vector = matrx(i, i to matrx.cols-1).t
+      //val product = outer(vec, arg2.forward())
 
       var sum:Double = 0
-      for(j <- 0 until vec.activeSize) {
-        sum += product(j,j)
+      for(j <- 0 until arg_vec.activeSize) {
+        sum += matrx(i, j)*arg_vec(j)
       }
 
       final_vec(i) = sum
@@ -468,7 +470,21 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
 
   }
   def backward(gradient: Vector): Unit = {
+    arg2.backward( gradient :* arg2.forward())
+    val vec = arg2.forward()
+    val matrx = arg1.forward().copy
 
+    val final_vec = arg2.forward()
+    val final_matrx = arg1.forward().copy
+    for(i <- 0 until matrx.rows) {
+      for(j <-0 until matrx.cols){
+        final_matrx(i,j) = vec(j) * gradient(j)
+      }
+      final_vec(i) = matrx(i,0) * gradient(i)
+    }
+
+    arg1.backward(matrx)
+    arg2.backward(final_vec)
   }
   def update(learningRate: Double): Unit = {
     arg1.update(learningRate)

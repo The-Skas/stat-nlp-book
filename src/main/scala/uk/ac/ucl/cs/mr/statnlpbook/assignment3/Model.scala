@@ -125,24 +125,63 @@ class RecurrentNeuralNetworkModel(embeddingSize: Int, hiddenSize: Int,
                                   matrixRegularizationStrength: Double = 0.0) extends Model {
   override val vectorParams: mutable.HashMap[String, VectorParam] =
     LookupTable.trainableWordVectors
-  vectorParams += "param_w" -> VectorParam(???)
-  vectorParams += "param_h0" -> VectorParam(???)
-  vectorParams += "param_b" -> VectorParam(???)
+  //W for regularization?
+  vectorParams += "param_w" -> VectorParam(embeddingSize)
+
+  vectorParams += "param_h0" -> VectorParam(hiddenSize)
+  vectorParams += "param_b" -> VectorParam(hiddenSize)
 
   override val matrixParams: mutable.HashMap[String, MatrixParam] =
     new mutable.HashMap[String, MatrixParam]()
-  matrixParams += "param_Wx" -> MatrixParam(???, ???)
-  matrixParams += "param_Wh" -> MatrixParam(???, ???)
+  matrixParams += "param_Wx" -> MatrixParam(hiddenSize, embeddingSize)
+  matrixParams += "param_Wh" -> MatrixParam(hiddenSize, hiddenSize)
 
-  def wordToVector(word: String): Block[Vector] = ???
+  val STR_WX = "param_Wx"
+  val STR_WH = "param_Wh"
+  val STR_B  = "param_b"
+  val STR_H0 = "param_h0"
+  val WEIGHT_STR = "param_w"
+  def wordToVector(word: String): Block[Vector] = {
+    return LookupTable.addTrainableWordVector(word , embeddingSize)
 
-  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = ???
+  }
 
-  def scoreSentence(sentence: Block[Vector]): Block[Double] = ???
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {
+    Sum(words)
+  }
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = {
+    //tanh([W^h]*h_t−1 + (W^x)x_t + b)
+    var wx:MatrixParam = null
+    var wh:MatrixParam = null
+
+    var b:Block[Vector] = LookupTable.get(STR_B)
+    var h0:Block[Vector] = LookupTable.get(STR_H0)
+    var w:Block[Vector] = LookupTable.get(WEIGHT_STR)
+
+    matrixParams.get(STR_WX) match {
+      case x: MatrixParam => wx = x
+    }
+
+    matrixParams.get(STR_WH) match {
+      case x: MatrixParam => wh = x
+    }
+
+    //tanh([W^h]*h_t−1 + (W^x)x_t + b)
+    val mult_1 = Mul(wh, h0)
+    val mult_2 = Mul(wx, sentence)
+
+    val sum_block = Sum(Seq(mult_1, mult_2, b))
+
+    return Tanh(sum_block)
+   // Mul(wx, LookupTable.get(STR_H0))
+    //Tanh(Sum())
+    ???
+  }
 
   def regularizer(words: Seq[Block[Vector]]): Loss =
     new LossSum(
-      L2Regularization(vectorRegularizationStrength, ???),
-      L2Regularization(matrixRegularizationStrength, ???)
+      L2Regularization(vectorRegularizationStrength, words:_*),
+      L2Regularization(matrixRegularizationStrength, words:_*)
     )
 }

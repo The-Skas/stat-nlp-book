@@ -100,8 +100,8 @@ object GradientChecker extends App {
   val simpleBlock = Dot(a, b)
   println("Dot Product: "+ simpleBlock.forward())
   println("Dot Gradient: ")
-  GradientChecker(simpleBlock, b)
-  GradientChecker(simpleBlock, a)
+ // GradientChecker(simpleBlock, b)
+ // GradientChecker(simpleBlock, a)
 
   //Cant do it for this.
   val sigmoid = Sigmoid(Dot(a, b))
@@ -121,11 +121,21 @@ object GradientChecker extends App {
 
 
   //Matrix checker:
-  println("Matrix gradient:")
+  println("Matrix TanhGradient:")
   var matrxParam = MatrixParam(3,3)
   matrxParam.set(mat(3,3)(1,2,3,4,5,6,7,8,9))
   val tanhBlock = Dot(a,Tanh( b))
   GradientChecker(tanhBlock, b)
+
+//  println("Matrix multi gradient")
+//  matrxParam.set(mat(3,3)(1,2,3,4,5,6,7,8,9))
+//  val multBlock = Dot(a,(Mul(matrxParam, b)))
+//  GradientChecker(multBlock, matrxParam)
+
+  println("Matrix multi gradient")
+  matrxParam.set(mat(3,3)(1,0,0,0,1,0,0,0,1))
+  val multBlock2 = Dot(a,(Mul(matrxParam, b)))
+  GradientChecker(multBlock2, matrxParam)
 
 
 
