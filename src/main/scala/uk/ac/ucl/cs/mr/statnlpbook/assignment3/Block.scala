@@ -7,6 +7,37 @@ import breeze.linalg.DenseMatrix
  * @author rockt
  */
 
+
+object Shared_Methods {
+  def IsNaN(a_vec:Vector): Boolean ={
+    for(i <- 0 until a_vec.activeSize) {
+      if(a_vec(i).isNaN()){
+        return true
+      }
+    }
+    return false
+  }
+
+  def IsNaN(matrx:Matrix): Boolean = {
+    for (i <- 0 until matrx.rows) {
+      for (j <- 0 until matrx.cols) {
+        if(matrx(i, j).isNaN()){
+          return true
+        }
+      }
+    }
+    return false
+  }
+  def IsNaN(value:Double): Boolean = {
+    if(value.isNaN()){
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+}
 /**
  * A trait for the core building **block** of our computation graphs
  * @tparam T the type parameter this block evaluates to (can be Double, Vector, Matrix)
@@ -110,6 +141,7 @@ class LossSum(override val args: Loss*) extends DoubleSum(args:_*) with Loss {
  * @param dim dimension of the vector
  * @param clip defines range in which gradients are clipped, i.e., (-clip, clip)
  */
+
 case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector] with GaussianDefaultInitialization {
   var param: Vector = initialize(() => defaultInitialization())
   val gradParam: Vector = randVec(dim, () => 0) //todo: initialize with zeros
@@ -119,15 +151,20 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
   def forward(): Vector = {
 
     output = param
+    if(Shared_Methods.IsNaN(output)){
+      val x = "Break_me"
+    }
     output.copy
   }
   /**
    * Accumulates the gradient in gradParam
    * @param gradient an upstream gradient
    */
+
+
   def backward(gradient: Vector): Unit = {
     //Shouldnt it pass all the gradient into all inputs
-    if(IsNaN(gradient)){
+    if(Shared_Methods.IsNaN(gradient)){
       val x = "Break_me"
     }
     gradParam += gradient
@@ -149,20 +186,11 @@ case class VectorParam(dim: Int, clip: Double = 10.0) extends ParamBlock[Vector]
     val old_param = param.copy
     param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate) //in-place
 
-    if(IsNaN(param)){
+    if(Shared_Methods.IsNaN(param)){
       val x = "Break_me"
     }
 
     resetGradient()
-  }
-
-  def IsNaN(a_vec:Vector): Boolean ={
-    for(i <- 0 until a_vec.activeSize) {
-      if(a_vec(i).isNaN()){
-        return true
-      }
-    }
-    return false
   }
   /**
    * Initializes the parameter randomly using a sampling function
@@ -212,6 +240,8 @@ case class Sum(args: Seq[Block[Vector]]) extends Block[Vector] {
     }
     //todo: make sure formula is correct
     output = endVector
+    Shared_Methods.IsNaN(output)
+
     output
   }
   def backward(gradient: Vector): Unit = {
@@ -242,9 +272,9 @@ case class Dot(arg1: Block[Vector], arg2: Block[Vector]) extends Block[Double] {
   }
 
   def backward(gradient: Double): Unit = {
-    val vec1= arg1.forward()
+    val vec1= arg1.output.copy
     //Vec1 differentiate product
-    val vec2 = arg2.forward()
+    val vec2 = arg2.output.copy
 
     vec1 :*= gradient
 
@@ -295,15 +325,23 @@ case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends
 
     var arg_val = arg.forward()
 
-    val left_operation = -y * math.log10( arg_val)
+
 
 
     if(arg_val >= 1.0){
       arg_val = 1.0 - 1e-8
     }
+
+    val left_operation = -y * math.log10( arg_val)
     val right_operation = (1.0 - y) * log( 1.0 - arg_val)
 
-    left_operation - right_operation
+    output = left_operation - right_operation
+
+    Shared_Methods.IsNaN(output)
+
+   
+
+    return output
   }
   //loss functions are root nodes so they don't have upstream gradients
   def backward(gradient: Double): Unit = backward()
@@ -313,10 +351,10 @@ case class NegativeLogLikelihoodLoss(arg: Block[Double], target: Double) extends
     val ln_10 = math.log10(10) / math.log10(e)
 
 
-    var left_operation =       -y * (1.0 / (ln_10 * (arg.forward())))
+    var left_operation =       -y * (1.0 / (ln_10 * (arg.output)))
 
 
-    var right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.forward() - 1.0)))
+    var right_operation = (1.0-y) * (1.0 / (ln_10 * (arg.output - 1.0)))
 
     if(left_operation.isNaN()  || left_operation.isInfinity){
       left_operation = 0.0
@@ -351,6 +389,7 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
 
     val losses = args.map(arg => {
       val in = arg.forward()
+
       in match {
         case v: Vector => {
           var norm: Double = 0.0
@@ -371,6 +410,9 @@ case class L2Regularization[P](strength: Double, args: Block[P]*) extends Loss {
       }
     })
     output = total_reg //sums the losses up
+
+    Shared_Methods.IsNaN(output)
+
     output
   }
   def update(learningRate: Double): Unit = {
@@ -419,6 +461,9 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
   val gradParam: Matrix = initialize(() => 0.0)
   def forward(): Matrix = {
     output = param
+    if(IsNaN(output)){
+      val x = "Break_me"
+    }
     output
   }
   def backward(gradient: Matrix): Unit = {
@@ -431,9 +476,25 @@ case class MatrixParam(dim1: Int, dim2: Int, clip: Double = 10.0) extends ParamB
       }
     }
   }
+  def IsNaN(matrx:Matrix): Boolean = {
+    for (i <- 0 until gradParam.rows) {
+      for (j <- 0 until gradParam.cols) {
+        if(gradParam(i, j).isNaN()){
+          return true
+        }
+      }
+    }
+    return false
+  }
   def update(learningRate: Double): Unit = {
     param :-= (breeze.linalg.clip(gradParam, -clip, clip) * learningRate)
+
+
+    if(IsNaN(param)){
+      val x = "Break_me"
+    }
     resetGradient()
+
   }
   def initialize(dist: () => Double): Matrix = {
     param = randMat(dim1, dim2, dist)
@@ -450,7 +511,7 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
   def forward(): Vector = {
     var final_vec:Vector = arg2.forward().copy
     val matrx = arg1.forward()
-    val arg_vec = arg2.forward()
+    val arg_vec = final_vec.copy
     for (i <- 0 until matrx.rows) {
 
       //val vec:Vector = matrx(i, i to matrx.cols-1).t
@@ -462,20 +523,21 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
       }
 
       final_vec(i) = sum
-      print("Yep")
     }
     //Incorrect
     output = final_vec
+
+    Shared_Methods.IsNaN(output)
+
     return output
 
   }
   def backward(gradient: Vector): Unit = {
-    arg2.backward( gradient :* arg2.forward())
-    val vec = arg2.forward()
-    val matrx = arg1.forward().copy
+    val vec = arg2.output
+    val matrx = arg1.output
 
-    val final_vec = arg2.forward()
-    val final_matrx = arg1.forward().copy
+    val final_vec = vec.copy
+    val final_matrx = matrx.copy
     for(i <- 0 until matrx.rows) {
       for(j <-0 until matrx.cols){
         final_matrx(i,j) = vec(j) * gradient(j)
@@ -498,26 +560,45 @@ case class Mul(arg1: Block[Matrix], arg2: Block[Vector]) extends Block[Vector] {
  */
 case class Tanh(arg: Block[Vector]) extends Block[Vector] {
   def forward(): Vector = {
-    output = arg.forward().copy
+    output = arg.forward()
     for(i <- 0 until output.activeSize){
       output(i) = math.tanh(output(i))
     }
+    Shared_Methods.IsNaN(output)
+
     return output
   }
   def backward(gradient: Vector): Unit = {
     //deriv(tanh(x)) = 1 - tan2(x)
-    output = arg.forward().copy
+    val grad = arg.output
     for(i <- 0 until output.activeSize){
-      output(i) = 1.0 -  (math.tanh(output(i)) * math.tanh(output(i)))
+      grad(i) = 1.0 -  (math.tanh(grad(i)) * math.tanh(grad(i)))
     }
 
-    arg.backward(output :* gradient)
+    arg.backward(grad :* gradient)
   }
   def update(learningRate: Double): Unit = {
     arg.update(learningRate)
   }
 }
 
+case class Tanh_Double(arg: Block[Double]) extends Block[Double] {
+  def forward(): Double = {
+
+    output = math.tanh(arg.forward())
+    return output
+  }
+  def backward(gradient: Double): Unit = {
+    //deriv(tanh(x)) = 1 - tan2(x)
+
+    val grad = 1.0 -  (output * output)
+
+    arg.backward(grad * gradient)
+  }
+  def update(learningRate: Double): Unit = {
+    arg.update(learningRate)
+  }
+}
 
 
 /**

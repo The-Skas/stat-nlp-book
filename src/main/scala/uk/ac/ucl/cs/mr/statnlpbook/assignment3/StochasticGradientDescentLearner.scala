@@ -17,7 +17,6 @@ object StochasticGradientDescentLearner extends App {
         //todo: update the parameters of the model and accumulate the loss
         val loss = model.loss(sentence, target)
         val score = loss.forward()
-
         if (score.isNaN()) {
             val wtf = "Oh shit"
         }
@@ -26,7 +25,11 @@ object StochasticGradientDescentLearner extends App {
         var expected = 0
         if (target) expected = 1
 
-        if (j % 1000 == 0) print(s"Iter $j -- Score: $score -- Expected: $expected\r")
+        if (j % 1000 == 0) {
+          val predicted_val = model.predict(sentence)
+          print(s"Iter $j -- Score: $score -- Expected: $expected - Pred: $predicted_val \r")
+
+        }
         loss.backward()
         loss.update(learningRate)   //Is the learning rate update correct?
 

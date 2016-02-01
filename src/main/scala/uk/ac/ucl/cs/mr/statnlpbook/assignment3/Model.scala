@@ -126,7 +126,7 @@ class RecurrentNeuralNetworkModel(embeddingSize: Int, hiddenSize: Int,
   override val vectorParams: mutable.HashMap[String, VectorParam] =
     LookupTable.trainableWordVectors
   //W for regularization?
-  vectorParams += "param_w" -> VectorParam(embeddingSize)
+  vectorParams += "param_w" -> VectorParam(hiddenSize)
 
   vectorParams += "param_h0" -> VectorParam(hiddenSize)
   vectorParams += "param_b" -> VectorParam(hiddenSize)
@@ -146,37 +146,49 @@ class RecurrentNeuralNetworkModel(embeddingSize: Int, hiddenSize: Int,
 
   }
 
-  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {
-    Sum(words)
-  }
-
-  def scoreSentence(sentence: Block[Vector]): Block[Double] = {
-    //tanh([W^h]*h_t−1 + (W^x)x_t + b)
+  def calculate_h(h_minus:Block[Vector], word:Block[Vector]): Block[Vector] = {
     var wx:MatrixParam = null
     var wh:MatrixParam = null
 
     var b:Block[Vector] = LookupTable.get(STR_B)
-    var h0:Block[Vector] = LookupTable.get(STR_H0)
     var w:Block[Vector] = LookupTable.get(WEIGHT_STR)
 
     matrixParams.get(STR_WX) match {
-      case x: MatrixParam => wx = x
+      case Some(x) => wx = x
     }
 
     matrixParams.get(STR_WH) match {
-      case x: MatrixParam => wh = x
+      case Some(x) => wh = x
     }
 
     //tanh([W^h]*h_t−1 + (W^x)x_t + b)
-    val mult_1 = Mul(wh, h0)
-    val mult_2 = Mul(wx, sentence)
+    val mult_1 = Mul(wh, h_minus)
+    val mult_2 = Mul(wx, word)
 
     val sum_block = Sum(Seq(mult_1, mult_2, b))
 
     return Tanh(sum_block)
+  }
+  def wordVectorsToSentenceVector(words: Seq[Block[Vector]]): Block[Vector] = {
+    //Hmmmm perhaps this is incorrect? As I sh
+    var h_minus = LookupTable.get(STR_H0)
+    for(word <- words) {
+      h_minus = calculate_h(h_minus, word)
+    }
+    return h_minus
+//    var h_minus = LookupTable.get(STR_H0)
+//    for(i <- 0 until 2) {
+//      h_minus = calculate_h(h_minus, words(i))
+//    }
+//    return h_minus
+  }
+
+  def scoreSentence(sentence: Block[Vector]): Block[Double] = {
+    //tanh([W^h]*h_t−1 + (W^x)x_t + b)
+
    // Mul(wx, LookupTable.get(STR_H0))
     //Tanh(Sum())
-    ???
+    return Dot(LookupTable.get(WEIGHT_STR), sentence)
   }
 
   def regularizer(words: Seq[Block[Vector]]): Loss =

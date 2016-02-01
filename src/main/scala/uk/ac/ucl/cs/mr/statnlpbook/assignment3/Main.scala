@@ -20,7 +20,7 @@ object Main extends App {
   var learningRate = 0.001
   var vectorRegularizationStrength = 0.05
 
-  val matrixRegularizationStrength = 0.0
+  val matrixRegularizationStrength = 0.01
 
   var wordDim = 10
 
@@ -30,7 +30,7 @@ object Main extends App {
   val validationSetName = "dev"
   
   var model: Model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
-  //val model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
+//  var model: Model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
 
 
   var x_epochs = new mutable.MutableList[(Double)]
@@ -83,7 +83,8 @@ object Main extends App {
         for(learning_rate <- learning_params ) {
           learningRate = learning_rate
           //overwrite
-          model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+//          model = new SumOfWordVectorsModel(wordDim, vectorRegularizationStrength)
+          model = new RecurrentNeuralNetworkModel(wordDim, hiddenDim, vectorRegularizationStrength, matrixRegularizationStrength)
           StochasticGradientDescentLearner(model, trainSetName, 6, learningRate, epochHook)
 
         }
